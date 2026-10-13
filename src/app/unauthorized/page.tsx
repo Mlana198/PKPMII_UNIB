@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShieldAlert, ArrowLeft, Home, LogIn } from 'lucide-react';
+import { ShieldAlert, Home, LogIn } from 'lucide-react';
 
 export default function UnauthorizedPage() {
   return (

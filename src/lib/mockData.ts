@@ -7,7 +7,7 @@ export const INITIAL_RAYONS: Rayon[] = [
     faculty: 'Fakultas Sains dan Teknologi',
     code: 'RR-SAINTEK',
     establishedYear: 2012,
-    totalCadres: 88,
+    totalCadres: 6,
   },
   {
     id: 'ryn-2',
@@ -15,7 +15,7 @@ export const INITIAL_RAYONS: Rayon[] = [
     faculty: 'Fakultas Tarbiyah',
     code: 'RUS-TARBIYAH',
     establishedYear: 2008,
-    totalCadres: 124,
+    totalCadres: 4,
   },
 ];
 

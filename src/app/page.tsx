@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Users, Calendar, Award, CheckCircle2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { INITIAL_ARTICLES, INITIAL_EVENTS, INITIAL_RAYONS, INITIAL_CADRES } from '@/lib/mockData';
 
 export default function HomePage() {
@@ -48,7 +48,7 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 -mt-8">
         <div className="bg-white border border-[#E2E8EF] rounded-lg shadow-sm grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#E2E8EF]">
           <div className="p-6 text-center">
-            <div className="text-3xl font-bold text-[#1B3D7B]">{INITIAL_CADRES.length + 208}+</div>
+            <div className="text-3xl font-bold text-[#1B3D7B]">{INITIAL_CADRES.length}</div>
             <div className="text-xs text-[#64748B] uppercase tracking-wide mt-1">Kader Terdata</div>
           </div>
           <div className="p-6 text-center">
@@ -60,7 +60,7 @@ export default function HomePage() {
             <div className="text-xs text-[#64748B] uppercase tracking-wide mt-1">Agenda Kaderisasi</div>
           </div>
           <div className="p-6 text-center">
-            <div className="text-3xl font-bold text-[#D4A017]">{INITIAL_ARTICLES.length}+</div>
+            <div className="text-3xl font-bold text-[#D4A017]">{INITIAL_ARTICLES.length}</div>
             <div className="text-xs text-[#64748B] uppercase tracking-wide mt-1">Warta & Opini</div>
           </div>
         </div>

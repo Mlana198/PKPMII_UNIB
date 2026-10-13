@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Quiz, QuizAttempt } from '@/lib/types';
 import { saveQuizAttempt } from '@/lib/storage';
-import { Clock, AlertTriangle, Award, RotateCcw, BookOpen, ArrowRight, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { Clock, AlertTriangle, RotateCcw, BookOpen, ArrowRight, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function QuizEngine({ quiz }: { quiz: Quiz }) {

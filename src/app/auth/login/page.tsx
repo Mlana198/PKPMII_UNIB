@@ -8,7 +8,7 @@ import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, CheckCircle2, KeyRoun
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, verifyEmail, requestPasswordReset, resetPassword } = useAuth();
+  const { login, verifyEmail, resendVerificationCode, requestPasswordReset, resetPassword } = useAuth();
 
   // Login form state
   const [email, setEmail] = useState('');
@@ -24,6 +24,8 @@ export default function LoginPage() {
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendNotice, setResendNotice] = useState<string | null>(null);
 
   // Forgot password modal state
   const [forgotModal, setForgotModal] = useState(false);
@@ -83,6 +85,20 @@ export default function LoginPage() {
       }, 1500);
     } else {
       setVerifyError(res.error || 'Kode verifikasi salah atau sudah kedaluwarsa.');
+    }
+  };
+
+  const handleResendVerificationCode = async () => {
+    setResending(true);
+    setResendNotice(null);
+    setVerifyError(null);
+    const res = await resendVerificationCode(unverifiedEmail);
+    setResending(false);
+    if (res.success) {
+      setResendNotice('Kode verifikasi baru telah dikirim ke email Anda.');
+      setTimeout(() => setResendNotice(null), 5000);
+    } else {
+      setVerifyError(res.error || 'Gagal mengirim ulang kode verifikasi.');
     }
   };
 
@@ -204,7 +220,10 @@ export default function LoginPage() {
               </label>
               <button
                 type="button"
-                onClick={() => { setForgotModal(true); setForgotEmail(email); }}
+                onClick={() => {
+                  setForgotModal(true);
+                  setForgotEmail(email);
+                }}
                 className="text-[10px] text-[#1B3D7B] hover:underline cursor-pointer"
               >
                 Lupa sandi?
@@ -265,10 +284,10 @@ export default function LoginPage() {
                   <div>
                     <h2 className="font-bold text-[#1E293B]">Verifikasi Email</h2>
                     <p className="text-xs text-[#64748B] mt-0.5">
-                      Masukkan kode 6 digit yang dikirim ke <strong>{unverifiedEmail}</strong>
+                      Masukkan kode 6 digit yang telah dikirim ke <strong>{unverifiedEmail}</strong>.
                     </p>
-                    <p className="text-[11px] text-amber-600 mt-1 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
-                      💡 Kode verifikasi ditampilkan saat pendaftaran (simulasi — tidak dikirim via email).
+                    <p className="text-[11px] text-[#1B3D7B] mt-1 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded">
+                      📩 Periksa kotak masuk (Inbox) atau folder <strong>Spam</strong> email Anda.
                     </p>
                   </div>
                   <button onClick={() => setVerifyModal(false)} className="text-[#94A3B8] hover:text-red-500">
@@ -282,6 +301,12 @@ export default function LoginPage() {
                   </div>
                 )}
 
+                {resendNotice && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded p-2.5 flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" /> {resendNotice}
+                  </div>
+                )}
+
                 <input
                   type="text"
                   maxLength={6}
@@ -291,14 +316,26 @@ export default function LoginPage() {
                   className="w-full border border-[#E2E8EF] rounded px-4 py-3 text-center text-lg font-mono font-bold tracking-[0.4em] focus:outline-none focus:border-[#1B3D7B]"
                 />
 
-                <button
-                  onClick={handleVerifyEmail}
-                  disabled={verifyLoading}
-                  className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-2.5 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  {verifyLoading ? 'Memverifikasi...' : 'Verifikasi Email'}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleVerifyEmail}
+                    disabled={verifyLoading}
+                    className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-2.5 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {verifyLoading ? 'Memverifikasi...' : 'Verifikasi Email'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResendVerificationCode}
+                    disabled={resending}
+                    className="w-full text-center text-xs text-[#1B3D7B] hover:underline font-medium py-1 disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${resending ? 'animate-spin' : ''}`} />
+                    {resending ? 'Mengirim ulang kode...' : 'Kirim Ulang Kode OTP'}
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -327,12 +364,12 @@ export default function LoginPage() {
                     </h2>
                     <p className="text-xs text-[#64748B] mt-0.5">
                       {forgotStep === 'email' && 'Masukkan email yang terdaftar di akun Anda.'}
-                      {forgotStep === 'code' && `Kode OTP 6 digit dikirim ke ${forgotEmail}`}
+                      {forgotStep === 'code' && `Kode OTP 6 digit telah dikirim ke ${forgotEmail}`}
                       {forgotStep === 'newpass' && 'Buat kata sandi baru yang kuat (minimal 6 karakter).'}
                     </p>
-                    {forgotStep === 'code' && sentCode && (
-                      <p className="text-[11px] text-amber-600 mt-1 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
-                        💡 Kode OTP (simulasi): <strong className="font-mono">{sentCode}</strong>
+                    {forgotStep === 'code' && (
+                      <p className="text-[11px] text-[#1B3D7B] mt-1 bg-blue-50 border border-blue-200 px-2 py-1 rounded">
+                        📩 Cek pesan masuk atau folder Spam di email Anda.
                       </p>
                     )}
                   </div>

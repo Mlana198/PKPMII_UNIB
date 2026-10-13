@@ -140,8 +140,8 @@ export default function RegisterPage() {
 
   return (
     <>
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
-      <div className="bg-white border border-[#E2E8EF] rounded-xl p-6 sm:p-9 shadow-sm space-y-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
+        <div className="bg-white border border-[#E2E8EF] rounded-xl p-6 sm:p-9 shadow-sm space-y-6">
         {/* Header */}
         <div className="flex items-start gap-4">
           <div className="w-14 h-14 rounded-xl bg-white p-1 border border-[#E2E8EF] shadow-sm shrink-0 flex items-center justify-center">
@@ -472,21 +472,21 @@ export default function RegisterPage() {
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-7 space-y-5">
           <div className="text-center space-y-3">
             <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
-            <h2 className="text-lg font-bold text-[#1E293B]">Akun Berhasil Dibuat!</h2>
+            <h2 className="text-lg font-bold text-[#1E293B]">Pendaftaran Berhasil!</h2>
             <p className="text-xs text-[#64748B]">
-              Akun untuk <strong>{registeredEmail}</strong> telah berhasil dibuat. Simpan kode verifikasi di bawah ini untuk mengaktifkan akun Anda.
+              Kode verifikasi telah dikirimkan ke <strong>{registeredEmail}</strong>. Periksa kotak masuk (Inbox) atau folder <strong>Spam</strong> email Anda.
             </p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 text-center space-y-2">
-            <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">
-              Kode Verifikasi Email Anda
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center space-y-2">
+            <p className="text-[11px] font-semibold text-[#1B3D7B] uppercase tracking-wider">
+              Kode Verifikasi Akun Anda
             </p>
             <p className="text-3xl font-bold font-mono text-[#1B3D7B] tracking-[0.3em]">
               {verificationCodeDisplay}
             </p>
-            <p className="text-[10px] text-amber-600">
-              💡 Simpan kode ini — Anda perlu memasukkannya saat login pertama kali untuk mengaktifkan akun.
+            <p className="text-[10px] text-[#64748B]">
+              Gunakan kode ini saat masuk pertama kali untuk mengaktifkan akun dan mencetak E-KTA.
             </p>
           </div>
 
@@ -495,7 +495,7 @@ export default function RegisterPage() {
             className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-3 rounded text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
           >
             <ArrowRight className="w-3.5 h-3.5" />
-            Lanjut ke Halaman Login
+            Lanjut ke Halaman Login & Verifikasi
           </button>
         </div>
       </div>

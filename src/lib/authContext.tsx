@@ -6,7 +6,6 @@ import { CadreProfile, AuthAccount } from '@/lib/types';
 import { 
   getCadres, 
   updateCadre, 
-  getAuthAccounts, 
   getAuthAccountByEmail, 
   saveAuthAccount, 
   updateAuthAccount,
@@ -23,6 +22,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requireVerification?: boolean; unverifiedEmail?: string }>;
   register: (email: string, password: string, cadreData: Partial<CadreProfile>) => Promise<{ success: boolean; error?: string; verificationCode?: string; email?: string }>;
   verifyEmail: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+  resendVerificationCode: (email: string) => Promise<{ success: boolean; code?: string; error?: string }>;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; code?: string; error?: string }>;
   resetPassword: (email: string, newPass: string) => Promise<{ success: boolean; error?: string }>;
   changeAccountCredentials: (params: { currentPassword?: string; newPassword?: string; newEmail?: string }) => Promise<{ success: boolean; error?: string }>;
@@ -40,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => ({ success: false }),
   register: async () => ({ success: false }),
   verifyEmail: async () => ({ success: false }),
+  resendVerificationCode: async () => ({ success: false }),
   requestPasswordReset: async () => ({ success: false }),
   resetPassword: async () => ({ success: false }),
   changeAccountCredentials: async () => ({ success: false }),
@@ -263,6 +264,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     saveAuthAccount(newAccount);
 
+    // Kirim email OTP nyata via server endpoint
+    try {
+      await fetch('/api/auth/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          code: verificationCode,
+          type: 'verification',
+          fullName: newProfile.fullName,
+        }),
+      });
+    } catch (emailErr) {
+      console.warn('Gagal memanggil API kirim email OTP:', emailErr);
+    }
+
     setIsLoading(false);
     return { 
       success: true, 
@@ -290,6 +307,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return res;
   };
 
+  const resendVerificationCode = async (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const acc = getAuthAccountByEmail(cleanEmail);
+    if (!acc) {
+      return { success: false, error: 'Email akun tidak terdaftar dalam sistem.' };
+    }
+    if (acc.isEmailVerified) {
+      return { success: false, error: 'Email akun ini sudah diverifikasi sebelumnya.' };
+    }
+
+    // Buat kode OTP baru
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+    updateAuthAccount(cleanEmail, { verificationCode: newCode });
+
+    // Cari nama kader jika ada
+    const cadres = getCadres();
+    const cadre = cadres.find((c) => c.email.toLowerCase() === cleanEmail || c.id === acc.cadreId);
+
+    // Kirim email OTP nyata via endpoint
+    try {
+      await fetch('/api/auth/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          code: newCode,
+          type: 'verification',
+          fullName: cadre?.fullName,
+        }),
+      });
+    } catch (err) {
+      console.warn('Gagal memanggil API kirim email OTP:', err);
+    }
+
+    return { success: true, code: newCode };
+  };
+
   const requestPasswordReset = async (email: string) => {
     const cleanEmail = email.trim().toLowerCase();
     const acc = getAuthAccountByEmail(cleanEmail);
@@ -299,6 +353,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Buat kode OTP reset 6 digit
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     updateAuthAccount(cleanEmail, { verificationCode: resetCode });
+
+    // Cari nama kader jika ada
+    const cadres = getCadres();
+    const cadre = cadres.find((c) => c.email.toLowerCase() === cleanEmail || c.id === acc.cadreId);
+
+    // Kirim email OTP reset nyata
+    try {
+      await fetch('/api/auth/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          code: resetCode,
+          type: 'reset',
+          fullName: cadre?.fullName,
+        }),
+      });
+    } catch (err) {
+      console.warn('Gagal memanggil API kirim email reset OTP:', err);
+    }
+
     return { success: true, code: resetCode };
   };
 
@@ -443,6 +518,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         verifyEmail,
+        resendVerificationCode,
         requestPasswordReset,
         resetPassword,
         changeAccountCredentials,
