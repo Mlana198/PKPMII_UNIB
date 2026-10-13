@@ -48,6 +48,7 @@ export default function KaderDashboardPage() {
 
   // Form edit profil state
   const [fullName, setFullName] = useState('');
+  const [nim, setNim] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
   const [faculty, setFaculty] = useState('');
@@ -71,6 +72,7 @@ export default function KaderDashboardPage() {
   useEffect(() => {
     if (cadreProfile) {
       setFullName(cadreProfile.fullName || '');
+      setNim(cadreProfile.nim || '');
       setPhoneNumber(cadreProfile.phoneNumber || '');
       setAddress(cadreProfile.address || '');
       setFaculty(cadreProfile.faculty || 'Fakultas Sains dan Teknologi');
@@ -149,6 +151,7 @@ export default function KaderDashboardPage() {
 
     const res = await updateProfile({
       fullName,
+      nim: nim.trim(),
       phoneNumber,
       address,
       faculty,
@@ -492,16 +495,17 @@ export default function KaderDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
-                    NIM (Nomor Induk Mahasiswa)
+                    NIM (Nomor Induk Mahasiswa) *
                   </label>
                   <input
+                    required
                     type="text"
-                    disabled
-                    value={cadreProfile?.nim || '-'}
-                    className="w-full border border-[#E2E8EF] bg-slate-100 text-[#64748B] rounded px-3.5 py-2 text-xs font-mono cursor-not-allowed"
-                    title="NIM hanya dapat diubah melalui konfirmasi Admin Satu Pintu"
+                    value={nim}
+                    onChange={(e) => setNim(e.target.value)}
+                    placeholder="Contoh: 2231001"
+                    className="w-full border border-[#E2E8EF] rounded px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
                   />
-                  <span className="text-[10px] text-[#94A3B8]">Terkunci demi integritas E-KTA</span>
+                  <span className="text-[10px] text-[#64748B]">Dapat diperbarui langsung oleh pemilik akun</span>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
