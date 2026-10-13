@@ -6,7 +6,8 @@ import {
   Quiz, 
   QuizAttempt, 
   ELibraryItem, 
-  Rayon 
+  Rayon,
+  AuthAccount
 } from './types';
 import { 
   INITIAL_CADRES, 
@@ -27,7 +28,29 @@ const STORAGE_KEYS = {
   ATTEMPTS: 'pmii_quiz_attempts',
   ELIBRARY: 'pmii_elibrary',
   RAYONS: 'pmii_rayons',
+  ACCOUNTS: 'pmii_auth_accounts',
 };
+
+// Akun bawaan (Admin & Kader Demo)
+const INITIAL_ACCOUNTS: AuthAccount[] = [
+  {
+    email: 'admin@pmii-unib.org',
+    password: 'admin123',
+    cadreId: 'admin-001',
+    isEmailVerified: true, // Admin bebas verifikasi
+    role: 'superadmin',
+    createdAt: new Date().toISOString(),
+  },
+  // Buat default account untuk setiap INITIAL_CADRES agar bisa langsung login
+  ...INITIAL_CADRES.map((c) => ({
+    email: c.email.toLowerCase(),
+    password: 'kader123', // Password default untuk data demo
+    cadreId: c.id,
+    isEmailVerified: true,
+    role: 'kader' as const,
+    createdAt: c.createdAt || new Date().toISOString(),
+  })),
+];
 
 function getItem<T>(key: string, defaultValue: T): T {
   if (typeof window === 'undefined') return defaultValue;
@@ -98,6 +121,85 @@ export function updateCadre(cadreId: string, updates: Partial<CadreProfile>): Ca
   cadres[index] = updatedProfile;
   setItem(STORAGE_KEYS.CADRES, cadres);
   return updatedProfile;
+}
+
+// ==================== AUTH ACCOUNTS ====================
+export function getAuthAccounts(): AuthAccount[] {
+  return getItem<AuthAccount[]>(STORAGE_KEYS.ACCOUNTS, INITIAL_ACCOUNTS);
+}
+
+export function getAuthAccountByEmail(email: string): AuthAccount | undefined {
+  const accounts = getAuthAccounts();
+  const clean = email.trim().toLowerCase();
+  return accounts.find((a) => a.email.toLowerCase() === clean);
+}
+
+export function saveAuthAccount(account: AuthAccount): AuthAccount {
+  const accounts = getAuthAccounts();
+  const cleanEmail = account.email.trim().toLowerCase();
+  const existingIdx = accounts.findIndex((a) => a.email.toLowerCase() === cleanEmail);
+
+  let updated: AuthAccount[];
+  const normalizedAccount: AuthAccount = {
+    ...account,
+    email: cleanEmail,
+  };
+
+  if (existingIdx !== -1) {
+    accounts[existingIdx] = normalizedAccount;
+    updated = [...accounts];
+  } else {
+    updated = [normalizedAccount, ...accounts];
+  }
+
+  setItem(STORAGE_KEYS.ACCOUNTS, updated);
+  return normalizedAccount;
+}
+
+export function updateAuthAccount(
+  email: string,
+  updates: Partial<AuthAccount>
+): AuthAccount | null {
+  const accounts = getAuthAccounts();
+  const cleanEmail = email.trim().toLowerCase();
+  const idx = accounts.findIndex((a) => a.email.toLowerCase() === cleanEmail);
+  if (idx === -1) return null;
+
+  const current = accounts[idx];
+  const updatedAccount: AuthAccount = {
+    ...current,
+    ...updates,
+    email: updates.email ? updates.email.trim().toLowerCase() : current.email,
+  };
+
+  accounts[idx] = updatedAccount;
+  setItem(STORAGE_KEYS.ACCOUNTS, accounts);
+  return updatedAccount;
+}
+
+export function verifyEmailAccount(email: string, code: string): { success: boolean; error?: string } {
+  const account = getAuthAccountByEmail(email);
+  if (!account) {
+    return { success: false, error: 'Akun tidak ditemukan.' };
+  }
+  if (account.isEmailVerified) {
+    return { success: true };
+  }
+  if (account.verificationCode !== code.trim()) {
+    return { success: false, error: 'Kode verifikasi tidak sesuai.' };
+  }
+
+  updateAuthAccount(email, { isEmailVerified: true, verificationCode: undefined });
+  return { success: true };
+}
+
+export function resetPasswordAccount(email: string, newPassword: string): { success: boolean; error?: string } {
+  const account = getAuthAccountByEmail(email);
+  if (!account) {
+    return { success: false, error: 'Akun dengan email ini tidak ditemukan.' };
+  }
+  updateAuthAccount(email, { password: newPassword });
+  return { success: true };
 }
 
 // Articles

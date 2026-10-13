@@ -2,6 +2,16 @@ export type UserRole = 'superadmin' | 'kaderisasi' | 'media' | 'rayon' | 'kader'
 
 export type FormalCadreLevel = 'Calon Anggota' | 'MAPABA' | 'PKD' | 'PKL' | 'PKN';
 
+export interface AuthAccount {
+  email: string;
+  password: string;
+  cadreId: string;
+  isEmailVerified: boolean;
+  verificationCode?: string;
+  role: UserRole;
+  createdAt: string;
+}
+
 export interface Rayon {
   id: string;
   name: string;

@@ -22,12 +22,29 @@ import {
   Upload,
   X,
   ImageIcon,
+  Settings,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Mail,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function KaderDashboardPage() {
   const router = useRouter();
-  const { user, cadreProfile, isLoading, logout, updateProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'kta' | 'biodata' | 'pelatihan' | 'cbt'>('kta');
+  const { user, cadreProfile, isLoading, logout, updateProfile, changeAccountCredentials, account } = useAuth();
+  const [activeTab, setActiveTab] = useState<'kta' | 'biodata' | 'pelatihan' | 'cbt' | 'pengaturan'>('kta');
+
+  // Account settings state
+  const [settCurrentPassword, setSettCurrentPassword] = useState('');
+  const [settNewPassword, setSettNewPassword] = useState('');
+  const [settConfirmNewPassword, setSettConfirmNewPassword] = useState('');
+  const [settNewEmail, setSettNewEmail] = useState('');
+  const [settShowCurrentPass, setSettShowCurrentPass] = useState(false);
+  const [settShowNewPass, setSettShowNewPass] = useState(false);
+  const [settSaving, setSettSaving] = useState(false);
+  const [settSuccess, setSettSuccess] = useState(false);
+  const [settError, setSettError] = useState<string | null>(null);
 
   // Form edit profil state
   const [fullName, setFullName] = useState('');
@@ -245,6 +262,7 @@ export default function KaderDashboardPage() {
             { id: 'biodata', label: 'Edit Biodata & Profil', icon: Edit3 },
             { id: 'pelatihan', label: 'Tiket & Pelatihan Saya', count: myRegistrations.length, icon: Calendar },
             { id: 'cbt', label: 'Riwayat Ujian CBT', count: myAttempts.length, icon: Award },
+            { id: 'pengaturan', label: 'Pengaturan Akun', icon: Settings },
           ].map(({ id, label, count, icon: Icon }) => (
             <button
               key={id}
@@ -721,6 +739,177 @@ export default function KaderDashboardPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tab: Pengaturan Akun */}
+      {activeTab === 'pengaturan' && (
+        <div className="bg-white border border-[#E2E8EF] rounded-xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="border-b border-[#E2E8EF] pb-4">
+            <h2 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
+              <Settings className="w-4 h-4 text-[#1B3D7B]" /> Pengaturan Akun
+            </h2>
+            <p className="text-xs text-[#64748B] mt-0.5">
+              Kelola email, kata sandi, dan status verifikasi akun Anda.
+            </p>
+          </div>
+
+          {/* Email & verification status */}
+          <div className="bg-[#F8FAFC] border border-[#E2E8EF] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Mail className="w-5 h-5 text-[#1B3D7B] shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-[#1E293B]">Email Aktif</p>
+                <p className="text-xs text-[#64748B] font-mono">{user?.email || '-'}</p>
+              </div>
+            </div>
+            {account?.isEmailVerified ? (
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 inline-flex items-center gap-1.5 self-start sm:self-auto">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Terverifikasi
+              </span>
+            ) : (
+              <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded border border-amber-200 inline-flex items-center gap-1.5 self-start sm:self-auto">
+                <Clock className="w-3.5 h-3.5" /> Belum Diverifikasi
+              </span>
+            )}
+          </div>
+
+          {settSuccess && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Pengaturan akun berhasil disimpan!</span>
+            </div>
+          )}
+          {settError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" /> {settError}
+            </div>
+          )}
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setSettSaving(true);
+              setSettError(null);
+              setSettSuccess(false);
+              if (settNewPassword && settNewPassword !== settConfirmNewPassword) {
+                setSettError('Konfirmasi kata sandi baru tidak cocok.');
+                setSettSaving(false);
+                return;
+              }
+              const res = await changeAccountCredentials({
+                currentPassword: settCurrentPassword || undefined,
+                newPassword: settNewPassword || undefined,
+                newEmail: settNewEmail || undefined,
+              });
+              setSettSaving(false);
+              if (res.success) {
+                setSettSuccess(true);
+                setSettCurrentPassword('');
+                setSettNewPassword('');
+                setSettConfirmNewPassword('');
+                setSettNewEmail('');
+                setTimeout(() => setSettSuccess(false), 4000);
+              } else {
+                setSettError(res.error || 'Gagal menyimpan pengaturan.');
+              }
+            }}
+            className="space-y-6 max-w-xl"
+          >
+            {/* Ganti Email */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-[#1B3D7B] uppercase tracking-wider border-b border-[#F1F5F9] pb-1.5 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5" /> Ganti Email
+              </h3>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                  Email Baru (kosongkan jika tidak ingin ganti)
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    value={settNewEmail}
+                    onChange={(e) => setSettNewEmail(e.target.value)}
+                    placeholder={user?.email || 'email-baru@contoh.com'}
+                    className="w-full border border-[#E2E8EF] rounded pl-9 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Ganti Password */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-[#1B3D7B] uppercase tracking-wider border-b border-[#F1F5F9] pb-1.5 flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5" /> Ganti Kata Sandi
+              </h3>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                  Kata Sandi Saat Ini (wajib diisi jika ingin ganti password)
+                </label>
+                <div className="relative">
+                  <input
+                    type={settShowCurrentPass ? 'text' : 'password'}
+                    value={settCurrentPassword}
+                    onChange={(e) => setSettCurrentPassword(e.target.value)}
+                    placeholder="Kata sandi saat ini"
+                    className="w-full border border-[#E2E8EF] rounded px-3.5 pr-10 py-2.5 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSettShowCurrentPass((p) => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
+                  >
+                    {settShowCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                    Kata Sandi Baru
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={settShowNewPass ? 'text' : 'password'}
+                      value={settNewPassword}
+                      onChange={(e) => setSettNewPassword(e.target.value)}
+                      placeholder="Min. 6 karakter"
+                      className="w-full border border-[#E2E8EF] rounded px-3.5 pr-10 py-2.5 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSettShowNewPass((p) => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
+                    >
+                      {settShowNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                    Ulangi Kata Sandi Baru
+                  </label>
+                  <input
+                    type={settShowNewPass ? 'text' : 'password'}
+                    value={settConfirmNewPassword}
+                    onChange={(e) => setSettConfirmNewPassword(e.target.value)}
+                    placeholder="Ulangi kata sandi baru"
+                    className="w-full border border-[#E2E8EF] rounded px-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={settSaving}
+              className="bg-[#1B3D7B] hover:bg-[#122852] disabled:opacity-50 text-white font-semibold text-xs px-5 py-2.5 rounded transition-colors shadow-sm inline-flex items-center gap-2"
+            >
+              <Save className="w-3.5 h-3.5" />
+              {settSaving ? 'Menyimpan...' : 'Simpan Pengaturan Akun'}
+            </button>
+          </form>
         </div>
       )}
     </div>

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
 import { getRayons } from '@/lib/storage';
 import { FormalCadreLevel } from '@/lib/types';
-import { Lock, Mail, User, AlertCircle, ArrowRight, Upload, X, Camera } from 'lucide-react';
+import { Lock, Mail, User, AlertCircle, ArrowRight, Upload, X, Camera, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,6 +17,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
   const [nim, setNim] = useState('');
@@ -30,6 +32,12 @@ export default function RegisterPage() {
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Verification modal after successful registration
+  const [verifyModal, setVerifyModal] = useState(false);
+  const [verificationCodeDisplay, setVerificationCodeDisplay] = useState('');
+  const [registeredEmail, setRegisteredEmail] = useState('');
+
 
   const processAvatarFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -114,7 +122,13 @@ export default function RegisterPage() {
     });
 
     if (res.success) {
-      router.push('/kader/dashboard');
+      if (res.verificationCode) {
+        setVerificationCodeDisplay(res.verificationCode);
+        setRegisteredEmail(res.email || email.trim());
+        setVerifyModal(true);
+      } else {
+        router.push('/kader/dashboard');
+      }
     } else {
       setErrorMsg(res.error || 'Gagal mendaftar. Silakan coba kembali.');
       setSubmitting(false);
@@ -125,6 +139,7 @@ export default function RegisterPage() {
     'w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs text-[#1E293B] focus:outline-none focus:border-[#1B3D7B] bg-white placeholder-[#94A3B8]';
 
   return (
+    <>
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
       <div className="bg-white border border-[#E2E8EF] rounded-xl p-6 sm:p-9 shadow-sm space-y-6">
         {/* Header */}
@@ -260,27 +275,45 @@ export default function RegisterPage() {
                 <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Kata Sandi *
                 </label>
-                <input
-                  required
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimal 6 karakter"
-                  className={inputClass}
-                />
+                <div className="relative">
+                  <input
+                    required
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Minimal 6 karakter"
+                    className={inputClass + ' pr-10'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((p) => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Ulangi Kata Sandi *
                 </label>
-                <input
-                  required
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Ulangi kata sandi"
-                  className={inputClass}
-                />
+                <div className="relative">
+                  <input
+                    required
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Ulangi kata sandi"
+                    className={inputClass + ' pr-10'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((p) => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -432,5 +465,41 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+
+    {/* ====== Modal: Kode Verifikasi Email ====== */}
+    {verifyModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-7 space-y-5">
+          <div className="text-center space-y-3">
+            <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
+            <h2 className="text-lg font-bold text-[#1E293B]">Akun Berhasil Dibuat!</h2>
+            <p className="text-xs text-[#64748B]">
+              Akun untuk <strong>{registeredEmail}</strong> telah berhasil dibuat. Simpan kode verifikasi di bawah ini untuk mengaktifkan akun Anda.
+            </p>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 text-center space-y-2">
+            <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">
+              Kode Verifikasi Email Anda
+            </p>
+            <p className="text-3xl font-bold font-mono text-[#1B3D7B] tracking-[0.3em]">
+              {verificationCodeDisplay}
+            </p>
+            <p className="text-[10px] text-amber-600">
+              💡 Simpan kode ini — Anda perlu memasukkannya saat login pertama kali untuk mengaktifkan akun.
+            </p>
+          </div>
+
+          <button
+            onClick={() => router.push('/auth/login')}
+            className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-3 rounded text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+            Lanjut ke Halaman Login
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
