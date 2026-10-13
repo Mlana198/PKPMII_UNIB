@@ -95,10 +95,33 @@ export default function QuizEngine({ quiz }: { quiz: Quiz }) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const q = quiz.questions[currentIndex];
+  const q = quiz.questions?.[currentIndex];
   const answeredCount = Object.keys(answers).length;
   const inputClass =
     'w-full border border-[#E2E8EF] rounded px-3.5 py-2 text-xs text-[#1E293B] focus:outline-none focus:border-[#1B3D7B] bg-white placeholder-[#94A3B8]';
+
+  // Guard: Jika paket soal belum memiliki butir pertanyaan
+  if (!quiz.questions || quiz.questions.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto bg-white border border-[#E2E8EF] rounded-lg p-8 text-center space-y-4 shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h2 className="text-base font-bold text-[#1E293B]">{quiz.title}</h2>
+        <p className="text-xs text-[#64748B] max-w-md mx-auto leading-relaxed">
+          Paket ujian ini belum memiliki butir soal yang diinput oleh panitia/instruktur kaderisasi. Silakan hubungi admin komisariat atau kembali ke daftar kuis.
+        </p>
+        <div className="pt-2">
+          <Link
+            href="/kuis"
+            className="inline-flex items-center gap-1.5 bg-[#1B3D7B] hover:bg-[#122852] text-white text-xs font-semibold px-4 py-2 rounded transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Portal Kuis
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // 1. FORM PRA-UJIAN
   if (!hasStarted) {
@@ -407,20 +430,20 @@ export default function QuizEngine({ quiz }: { quiz: Quiz }) {
               <span className="text-xs font-bold text-[#1B3D7B] bg-blue-50 px-2.5 py-0.5 rounded">
                 Soal {currentIndex + 1} dari {quiz.questions.length}
               </span>
-              <span className="text-xs text-[#64748B] font-medium">{q.category}</span>
+              <span className="text-xs text-[#64748B] font-medium">{q?.category}</span>
             </div>
 
             <p className="text-sm sm:text-base font-semibold text-[#1E293B] mb-5 leading-relaxed">
-              {q.questionText}
+              {q?.questionText || 'Soal tidak ditemukan'}
             </p>
 
             <div className="space-y-2.5 mb-6">
-              {q.options.map((opt) => {
-                const isSelected = answers[q.id] === opt.id;
+              {q?.options?.map((opt) => {
+                const isSelected = q ? answers[q.id] === opt.id : false;
                 return (
                   <button
                     key={opt.id}
-                    onClick={() => setAnswers({ ...answers, [q.id]: opt.id })}
+                    onClick={() => q && setAnswers({ ...answers, [q.id]: opt.id })}
                     className={`w-full text-left px-4 py-3 rounded border text-xs sm:text-sm transition-colors ${
                       isSelected
                         ? 'border-[#1B3D7B] bg-blue-50 text-[#1B3D7B] font-semibold'

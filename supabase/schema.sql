@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS cadres (
     faculty VARCHAR(200),
     study_program VARCHAR(150) NOT NULL,
     entry_year INT NOT NULL,
+    gender VARCHAR(20) DEFAULT 'Laki-laki',
     mapaba_year INT,
     cadre_level cadre_level_enum DEFAULT 'MAPABA',
     non_formal_trainings TEXT[] DEFAULT ARRAY[]::TEXT[],

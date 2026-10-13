@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/lib/authContext';
 import { getEventBySlug, saveRegistration, getRayons } from '@/lib/storage';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock, LogIn, CheckCircle } from 'lucide-react';
 
 export default function EventRegisterPage({
   params,
@@ -13,6 +14,7 @@ export default function EventRegisterPage({
 }) {
   const { slug } = use(params);
   const router = useRouter();
+  const { user, cadreProfile, isLoading } = useAuth();
   const event = getEventBySlug(slug);
   const rayons = getRayons();
 
@@ -28,6 +30,24 @@ export default function EventRegisterPage({
   });
   const [submitting, setSubmitting] = useState(false);
 
+  // Auto-fill profil kader yang login
+  useEffect(() => {
+    if (cadreProfile) {
+      setForm((prev) => ({
+        ...prev,
+        fullName: cadreProfile.fullName || prev.fullName,
+        nim: cadreProfile.nim || prev.nim,
+        university: cadreProfile.university || prev.university,
+        rayon: cadreProfile.rayonName || prev.rayon,
+        studyProgram: cadreProfile.studyProgram || prev.studyProgram,
+        phoneNumber: cadreProfile.phoneNumber || prev.phoneNumber,
+        email: cadreProfile.email || user?.email || prev.email,
+      }));
+    } else if (user?.email) {
+      setForm((prev) => ({ ...prev, email: user.email || '' }));
+    }
+  }, [cadreProfile, user]);
+
   if (!event) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center text-[#64748B]">
@@ -35,6 +55,53 @@ export default function EventRegisterPage({
         <Link href="/kegiatan" className="text-[#1B3D7B] text-xs underline mt-2 inline-block">
           Kembali ke agenda
         </Link>
+      </div>
+    );
+  }
+
+  // Jika Belum Login: Tampilkan Notifikasi Wajib Login
+  if (!isLoading && !user) {
+    return (
+      <div className="max-w-xl mx-auto px-4 sm:px-6 py-16">
+        <Link
+          href={`/kegiatan/${event.slug}`}
+          className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#1B3D7B] mb-8 transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Deskripsi Acara
+        </Link>
+
+        <div className="bg-white border border-[#E2E8EF] rounded-xl p-8 text-center space-y-5 shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-200 text-[#1B3D7B] flex items-center justify-center mx-auto">
+            <Lock className="w-6 h-6 text-[#1B3D7B]" />
+          </div>
+
+          <div>
+            <span className="text-[10px] font-bold text-[#D4A017] uppercase tracking-wider bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
+              Pendaftaran Resmi
+            </span>
+            <h1 className="text-xl font-bold text-[#1E293B] mt-2">
+              Masuk Akun untuk Mendaftar Pelatihan
+            </h1>
+            <p className="text-xs text-[#64748B] mt-1.5 leading-relaxed">
+              Pendaftaran kegiatan <strong>{event.title}</strong> mewajibkan akun kader agar tiket presensi, modul materi, dan sertifikat ujian terhubung otomatis.
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
+            <Link
+              href={`/auth/login?redirect=/kegiatan/${event.slug}/daftar`}
+              className="bg-[#1B3D7B] hover:bg-[#122852] text-white text-xs font-semibold px-5 py-2.5 rounded transition-colors shadow-sm inline-flex items-center justify-center gap-1.5"
+            >
+              <LogIn className="w-3.5 h-3.5" /> Masuk Akun Sekarang
+            </Link>
+            <Link
+              href="/auth/register"
+              className="border border-[#CBD5E1] text-[#1E293B] hover:border-[#1B3D7B] text-xs font-semibold px-4 py-2.5 rounded transition-colors"
+            >
+              Daftar Akun Kader Baru
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -78,13 +145,13 @@ export default function EventRegisterPage({
 
       <div className="mb-8">
         <span className="text-xs font-semibold text-[#D4A017] uppercase tracking-wider">
-          Formulir Pendaftaran
+          Formulir Pendaftaran Resmi
         </span>
         <h1 className="text-2xl font-bold text-[#1E293B] mt-1">
           {event.title}
         </h1>
         <p className="text-[#64748B] text-xs mt-1">
-          PK PMII Universitas Ibrahimy Sukorejo Situbondo
+          Data pendaftaran otomatis disinkronkan dengan profil keanggotaan Anda.
         </p>
       </div>
 

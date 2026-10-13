@@ -85,6 +85,21 @@ export function toggleVerifyCadre(cadreId: string): CadreProfile[] {
   return updated;
 }
 
+export function updateCadre(cadreId: string, updates: Partial<CadreProfile>): CadreProfile | null {
+  const cadres = getCadres();
+  const index = cadres.findIndex(c => c.id === cadreId);
+  if (index === -1) return null;
+
+  const updatedProfile: CadreProfile = {
+    ...cadres[index],
+    ...updates,
+  };
+
+  cadres[index] = updatedProfile;
+  setItem(STORAGE_KEYS.CADRES, cadres);
+  return updatedProfile;
+}
+
 // Articles
 export function getArticles(): Article[] {
   return getItem<Article[]>(STORAGE_KEYS.ARTICLES, INITIAL_ARTICLES);
@@ -105,6 +120,22 @@ export function saveArticle(article: Omit<Article, 'id' | 'publishedAt'>): Artic
   const updated = [newArticle, ...articles];
   setItem(STORAGE_KEYS.ARTICLES, updated);
   return newArticle;
+}
+
+export function updateArticle(id: string, updates: Partial<Omit<Article, 'id' | 'publishedAt'>>): Article | null {
+  const articles = getArticles();
+  const idx = articles.findIndex(a => a.id === id);
+  if (idx === -1) return null;
+  const updated = articles.map(a => a.id === id ? { ...a, ...updates } : a);
+  setItem(STORAGE_KEYS.ARTICLES, updated);
+  return updated[idx];
+}
+
+export function deleteArticle(id: string): Article[] {
+  const articles = getArticles();
+  const updated = articles.filter(a => a.id !== id);
+  setItem(STORAGE_KEYS.ARTICLES, updated);
+  return updated;
 }
 
 // Events
@@ -181,4 +212,99 @@ export function saveQuizAttempt(attempt: Omit<QuizAttempt, 'id'>): QuizAttempt {
 // E-Library
 export function getELibrary(): ELibraryItem[] {
   return getItem<ELibraryItem[]>(STORAGE_KEYS.ELIBRARY, INITIAL_ELIBRARY);
+}
+
+export function saveELibrary(item: Omit<ELibraryItem, 'id'>): ELibraryItem {
+  const library = getELibrary();
+  const newItem: ELibraryItem = {
+    ...item,
+    id: `lib-${Date.now()}`,
+  };
+  const updated = [newItem, ...library];
+  setItem(STORAGE_KEYS.ELIBRARY, updated);
+  return newItem;
+}
+
+export function updateELibrary(id: string, updates: Partial<Omit<ELibraryItem, 'id'>>): ELibraryItem | null {
+  const library = getELibrary();
+  const idx = library.findIndex(item => item.id === id);
+  if (idx === -1) return null;
+  const updated = library.map(item => item.id === id ? { ...item, ...updates } : item);
+  setItem(STORAGE_KEYS.ELIBRARY, updated);
+  return updated[idx];
+}
+
+export function deleteELibrary(id: string): ELibraryItem[] {
+  const library = getELibrary();
+  const updated = library.filter(item => item.id !== id);
+  setItem(STORAGE_KEYS.ELIBRARY, updated);
+  return updated;
+}
+
+// Events – Add new training event
+export function saveEvent(event: Omit<TrainingEvent, 'id' | 'currentRegistered'>): TrainingEvent {
+  const events = getEvents();
+  const newEvent: TrainingEvent = {
+    ...event,
+    id: `ev-${Date.now()}`,
+    currentRegistered: 0,
+  };
+  const updated = [newEvent, ...events];
+  setItem(STORAGE_KEYS.EVENTS, updated);
+  return newEvent;
+}
+
+export function updateEvent(id: string, updates: Partial<Omit<TrainingEvent, 'id' | 'currentRegistered'>>): TrainingEvent | null {
+  const events = getEvents();
+  const idx = events.findIndex(e => e.id === id);
+  if (idx === -1) return null;
+  const updated = events.map(e => e.id === id ? { ...e, ...updates } : e);
+  setItem(STORAGE_KEYS.EVENTS, updated);
+  return updated[idx];
+}
+
+export function deleteEvent(id: string): TrainingEvent[] {
+  const events = getEvents();
+  const updated = events.filter(e => e.id !== id);
+  setItem(STORAGE_KEYS.EVENTS, updated);
+  return updated;
+}
+
+// Quizzes – Add new CBT quiz
+export function saveQuiz(quiz: Omit<Quiz, 'id'>): Quiz {
+  const quizzes = getQuizzes();
+  const newQuiz: Quiz = {
+    ...quiz,
+    id: `quiz-${Date.now()}`,
+  };
+  const updated = [newQuiz, ...quizzes];
+  setItem(STORAGE_KEYS.QUIZZES, updated);
+  return newQuiz;
+}
+
+export function updateQuiz(quizId: string, updatedFields: Partial<Quiz>): Quiz[] {
+  const quizzes = getQuizzes();
+  const updated = quizzes.map((q) => (q.id === quizId ? { ...q, ...updatedFields } : q));
+  setItem(STORAGE_KEYS.QUIZZES, updated);
+  return updated;
+}
+
+export function deleteQuiz(quizId: string): Quiz[] {
+  const quizzes = getQuizzes();
+  const updated = quizzes.filter(q => q.id !== quizId);
+  setItem(STORAGE_KEYS.QUIZZES, updated);
+  return updated;
+}
+
+export function addQuestionToQuiz(quizId: string, question: Omit<Quiz['questions'][0], 'id'>): Quiz[] {
+  const quizzes = getQuizzes();
+  const newQuestion = {
+    ...question,
+    id: `q-${Date.now()}`,
+  };
+  const updated = quizzes.map((q) =>
+    q.id === quizId ? { ...q, questions: [...q.questions, newQuestion] } : q
+  );
+  setItem(STORAGE_KEYS.QUIZZES, updated);
+  return updated;
 }

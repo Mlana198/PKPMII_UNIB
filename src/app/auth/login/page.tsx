@@ -19,12 +19,16 @@ export default function LoginPage() {
     setErrorMsg(null);
     setSubmitting(true);
 
-    const res = await login(email, password);
+    const cleanEmail = email.trim();
+    const res = await login(cleanEmail, password);
     if (res.success) {
-      if (email.includes('admin')) {
-        router.push('/admin');
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectUrl = urlParams.get('redirect');
+      
+      if (cleanEmail.includes('admin')) {
+        router.push(redirectUrl || '/admin');
       } else {
-        router.push('/kader/dashboard');
+        router.push(redirectUrl || '/kader/dashboard');
       }
     } else {
       setErrorMsg(res.error || 'Email atau password salah.');
@@ -37,8 +41,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white border border-[#E2E8EF] rounded-xl p-7 sm:p-9 shadow-sm space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-lg bg-[#1B3D7B] text-[#D4A017] flex items-center justify-center font-extrabold text-sm mx-auto shadow-sm">
-            PMII
+          <div className="w-14 h-14 mx-auto flex items-center justify-center p-1 bg-white rounded-xl shadow-sm border border-[#E2E8EF]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/logos/komisariat.png" alt="Logo PK PMII UNIB" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-[#1E293B]">
             Masuk ke Portal Kader
@@ -105,13 +110,6 @@ export default function LoginPage() {
             {submitting ? 'Memeriksa...' : 'Masuk Sekarang'} <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </form>
-
-        {/* Demo hints */}
-        <div className="bg-[#F8FAFC] border border-[#E2E8EF] rounded-lg p-3 text-[11px] text-[#64748B] space-y-1">
-          <p className="font-semibold text-[#1E293B]">Contoh Akun Uji Coba:</p>
-          <p>• Kader: <code className="text-[#1B3D7B]">faiz.alghifari@pmii-unib.org</code> (pass bebas / klik masuk)</p>
-          <p>• Admin: <code className="text-[#1B3D7B]">admin@pmii-unib.org</code> (pass: <code className="text-[#1B3D7B]">admin123</code>)</p>
-        </div>
 
         {/* Register link */}
         <div className="pt-4 border-t border-[#E2E8EF] text-center text-xs text-[#64748B]">

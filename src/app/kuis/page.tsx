@@ -1,12 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Clock, ShieldCheck, Award } from 'lucide-react';
+import { ArrowRight, Clock, ShieldCheck, Award, Lock, LogIn } from 'lucide-react';
+import { Quiz } from '@/lib/types';
+import { useAuth } from '@/lib/authContext';
 import { getQuizzes } from '@/lib/storage';
 
 export default function KuisIndexPage() {
-  const quizzes = getQuizzes();
+  const { user, isLoading } = useAuth();
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+
+  useEffect(() => {
+    setQuizzes(getQuizzes());
+  }, []);
+
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
@@ -22,6 +30,35 @@ export default function KuisIndexPage() {
           Sistem penilaian terpadu pre-test dan post-test untuk calon anggota & kader PK PMII Universitas Ibrahimy.
         </p>
       </div>
+
+      {/* Jika Belum Login: Banner Akses CBT */}
+      {!isLoading && !user && (
+        <div className="bg-[#1B3D7B] text-white rounded-xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+          <div className="space-y-2 text-center md:text-left">
+            <span className="text-[10px] font-bold text-[#D4A017] uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded border border-white/20 inline-flex items-center gap-1">
+              <Lock className="w-3 h-3 text-[#D4A017]" /> Wajib Masuk Akun
+            </span>
+            <h2 className="text-xl font-bold">Ujian Digital Terhubung ke Akun Kader</h2>
+            <p className="text-xs text-white/80 max-w-xl leading-relaxed">
+              Hasil skor nilai pre-test dan post-test Anda akan otomatis dicatat pada profil keanggotaan dan sertifikat kaderisasi resmi. Silakan login terlebih dahulu.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+            <Link
+              href="/auth/login?redirect=/kuis"
+              className="bg-[#D4A017] hover:bg-[#BF8E10] text-[#1B3D7B] font-bold text-xs px-5 py-2.5 rounded transition-colors shadow-sm inline-flex items-center justify-center gap-1.5"
+            >
+              <LogIn className="w-3.5 h-3.5" /> Masuk untuk Ujian
+            </Link>
+            <Link
+              href="/auth/register"
+              className="border border-white/40 hover:border-white text-white text-xs font-semibold px-4 py-2.5 rounded transition-colors inline-flex items-center justify-center gap-1"
+            >
+              Daftar Akun <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Feature cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -97,12 +134,21 @@ export default function KuisIndexPage() {
                 >
                   Pelajari Materi
                 </Link>
-                <Link
-                  href={`/kuis/${quiz.id}`}
-                  className="bg-[#1B3D7B] hover:bg-[#122852] text-white text-xs font-semibold px-4 py-2 rounded transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                >
-                  Mulai Ujian <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                {user ? (
+                  <Link
+                    href={`/kuis/${quiz.id}`}
+                    className="bg-[#1B3D7B] hover:bg-[#122852] text-white text-xs font-semibold px-4 py-2 rounded transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                  >
+                    Mulai Ujian <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/auth/login?redirect=/kuis/${quiz.id}`}
+                    className="bg-[#D4A017] hover:bg-[#BF8E10] text-[#1B3D7B] text-xs font-bold px-4 py-2 rounded transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Lock className="w-3.5 h-3.5" /> Masuk untuk Ujian
+                  </Link>
+                )}
               </div>
             </div>
           ))}

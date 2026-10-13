@@ -24,6 +24,7 @@ export interface CadreProfile {
   entryYear: number;
   mapabaYear?: number;
   cadreLevel: FormalCadreLevel;
+  gender?: 'Laki-laki' | 'Perempuan';
   nonFormalTrainings?: string[];
   phoneNumber: string;
   email: string;

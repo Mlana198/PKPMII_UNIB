@@ -4,10 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { CadreProfile } from '@/lib/types';
 import QRCode from 'qrcode';
 import { Download, RotateCcw, CheckCircle } from 'lucide-react';
+import { getLeadership } from '@/lib/leadership';
 
 export default function EKTAViewer({ cadre }: { cadre: CadreProfile }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [leadership, setLeadership] = useState({ ketua: 'M. Rofiul Anam', sekretaris: 'Ahmad Wildan Zainur R' });
+
+  useEffect(() => {
+    setLeadership(getLeadership());
+  }, []);
 
   useEffect(() => {
     QRCode.toDataURL(
@@ -55,8 +61,9 @@ export default function EKTAViewer({ cadre }: { cadre: CadreProfile }) {
             {/* Header KTA */}
             <div className="flex items-center justify-between border-b border-white/15 pb-2.5">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded bg-[#D4A017] flex items-center justify-center shrink-0">
-                  <span className="text-[#1B3D7B] font-extrabold text-[9px] tracking-tight">PMII</span>
+                <div className="w-8 h-8 rounded-lg bg-white p-0.5 flex items-center justify-center shrink-0 shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/logos/komisariat.png" alt="Logo PK PMII UNIB" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="text-[#D4A017] text-[8px] font-bold tracking-widest uppercase">
@@ -98,7 +105,7 @@ export default function EKTAViewer({ cadre }: { cadre: CadreProfile }) {
                   </div>
                   <div>
                     <span className="text-white/50 text-[8px] uppercase tracking-wide">Angkatan</span>
-                    <div className="text-white">{cadre.entryYear}</div>
+                    <div className="text-white">{cadre.entryYear} {cadre.gender ? `(${cadre.gender === 'Perempuan' ? 'P' : 'L'})` : ''}</div>
                   </div>
                 </div>
                 <div>
@@ -165,14 +172,14 @@ export default function EKTAViewer({ cadre }: { cadre: CadreProfile }) {
             <div className="border-t border-white/15 pt-2 flex items-end justify-between text-[7.5px] text-center">
               <div>
                 <div className="text-white/40 mb-3">Ketua Komisariat,</div>
-                <div className="text-white font-semibold underline">M. Rofiul Anam</div>
+                <div className="text-white font-semibold underline">{leadership.ketua || 'M. Rofiul Anam'}</div>
               </div>
               <div className="text-center text-[6.5px] text-[#D4A017]/80 font-mono">
                 PK PMII UNIB<br />SITUBONDO
               </div>
               <div>
                 <div className="text-white/40 mb-3">Sekretaris,</div>
-                <div className="text-white font-semibold underline">Ahmad Wildan</div>
+                <div className="text-white font-semibold underline">{leadership.sekretaris || 'Ahmad Wildan Zainur R'}</div>
               </div>
             </div>
           </div>

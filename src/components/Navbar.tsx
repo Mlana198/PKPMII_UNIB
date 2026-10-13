@@ -3,25 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import { Menu, X, User, LogOut, Lock } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-
-const navLinks = [
-  { name: 'Beranda', href: '/' },
-  { name: 'Warta & Opini', href: '/berita' },
-  { name: 'Database Kader', href: '/kader' },
-  { name: 'Pelatihan', href: '/kegiatan' },
-  { name: 'CBT Ujian', href: '/kuis' },
-  { name: 'E-Library', href: '/elibrary' },
-];
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const { user, cadreProfile, logout, isAdmin } = useAuth();
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
@@ -34,6 +27,17 @@ export default function Navbar() {
     return pathname.startsWith(href);
   };
 
+  // Nav Links adaptif sesuai peran & status login
+  const navLinks = [
+    { name: 'Beranda', href: '/', public: true },
+    { name: 'Warta & Opini', href: '/berita', public: true },
+    { name: 'Pelatihan', href: '/kegiatan', public: true },
+    { name: 'E-Library', href: '/elibrary', public: true }, // publik bisa lihat list, unduh wajib login
+    { name: 'CBT Ujian', href: '/kuis', public: true }, // publik bisa lihat jadwal, mulai ujian wajib login
+    // Database Kader link always rendered, hidden for non-admins to keep consistent markup
+    { name: 'Database Kader', href: '/kader', public: false, adminOnly: true },
+  ];
+
   return (
     <header className={`sticky top-0 z-50 transition-all duration-200 bg-[#1B3D7B] ${
       scrolled ? 'shadow-md border-b border-[#122852]' : 'border-b border-[#2552a5]/40'
@@ -41,8 +45,9 @@ export default function Navbar() {
       <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded bg-[#D4A017] flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
-            <span className="text-[#1B3D7B] font-extrabold text-xs tracking-tight">PMII</span>
+          <div className="w-9 h-9 rounded-lg bg-white/10 p-1 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105 border border-white/20">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/logos/komisariat.png" alt="Logo PK PMII UNIB" className="w-full h-full object-contain" />
           </div>
           <div className="leading-tight">
             <div className="text-white font-semibold text-sm tracking-wide">PK PMII UNIB</div>
@@ -53,6 +58,10 @@ export default function Navbar() {
         {/* Desktop Navigation Links */}
         <div className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => {
+            // After mount: hide adminOnly links from non-admins
+            if (mounted && link.adminOnly && !isAdmin) return null;
+            // Before mount: hide adminOnly links to match server markup
+            if (!mounted && link.adminOnly) return null;
             const active = isActive(link.href);
             return (
               <Link
@@ -70,26 +79,28 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Actions / Right Buttons (Adaptive to Auth) */}
-        <div className="hidden lg:flex items-center gap-3">
-          {user ? (
+        {/* Actions / Right Buttons (Adaptive to Auth with Hydration Guard) */}
+        <div className="hidden lg:flex items-center gap-3 min-h-[36px]">
+          {!mounted ? (
+            <div className="w-32 h-8"></div>
+          ) : user ? (
             <div className="flex items-center gap-2">
               {isAdmin ? (
                 <Link
                   href="/admin"
                   className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded font-medium transition-colors"
                 >
-                  Admin Portal
+                  Portal Pengurus
                 </Link>
-              ) : null}
-
-              <Link
-                href="/kader/dashboard"
-                className="bg-[#D4A017] hover:bg-[#BF8E10] text-[#1B3D7B] font-semibold text-xs px-3.5 py-1.5 rounded transition-colors shadow-sm flex items-center gap-1.5"
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>{cadreProfile?.fullName?.split(' ')[0] || 'Dashboard'}</span>
-              </Link>
+              ) : (
+                <Link
+                  href="/kader/dashboard"
+                  className="bg-[#D4A017] hover:bg-[#BF8E10] text-[#1B3D7B] font-semibold text-xs px-3.5 py-1.5 rounded transition-colors shadow-sm flex items-center gap-1.5"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>{cadreProfile?.fullName?.split(' ')[0] || 'Dashboard'}</span>
+                </Link>
+              )}
 
               <button
                 onClick={() => logout()}
@@ -131,6 +142,7 @@ export default function Navbar() {
       {isOpen && (
         <div className="lg:hidden bg-[#122852] border-t border-white/10 px-4 py-4 space-y-1">
           {navLinks.map((link) => {
+            if (link.adminOnly && !isAdmin) return null;
             const active = isActive(link.href);
             return (
               <Link
@@ -148,14 +160,14 @@ export default function Navbar() {
             );
           })}
           <div className="pt-3 border-t border-white/10 mt-3 grid grid-cols-2 gap-2">
-            {user ? (
+            {!mounted ? null : user ? (
               <>
                 <Link
-                  href="/kader/dashboard"
+                  href={isAdmin ? "/admin" : "/kader/dashboard"}
                   onClick={() => setIsOpen(false)}
                   className="text-center py-2 bg-[#D4A017] text-[#1B3D7B] font-semibold text-xs rounded"
                 >
-                  Dashboard Kader
+                  {isAdmin ? "Portal Pengurus" : "Dashboard Saya"}
                 </Link>
                 <button
                   onClick={() => {

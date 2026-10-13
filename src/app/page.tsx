@@ -75,29 +75,41 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {INITIAL_RAYONS.map((rayon) => (
-            <div key={rayon.id} className="bg-white border border-[#E2E8EF] rounded-lg p-6 hover:border-[#1B3D7B] transition-colors">
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[11px] font-semibold text-[#1B3D7B] bg-blue-50 px-2.5 py-1 rounded">
-                    {rayon.code}
-                  </span>
-                  <h3 className="text-lg font-bold text-[#1E293B] mt-3">{rayon.name}</h3>
-                  <p className="text-xs text-[#64748B] mt-1">{rayon.faculty}</p>
+          {INITIAL_RAYONS.map((rayon) => {
+            const logoPath = rayon.id === 'ryn-2'
+              ? '/images/logos/rayon-raden-umar-said.png'
+              : '/images/logos/rayon-raden-rahmat.png';
+
+            return (
+              <div key={rayon.id} className="bg-white border border-[#E2E8EF] rounded-xl p-6 hover:border-[#1B3D7B] transition-colors shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-xl bg-slate-50 border border-[#E2E8EF] p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={logoPath} alt={rayon.name} className="w-full h-full object-contain" />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-semibold text-[#1B3D7B] bg-blue-50 px-2.5 py-0.5 rounded border border-blue-100">
+                        {rayon.code}
+                      </span>
+                      <h3 className="text-lg font-bold text-[#1E293B] mt-1.5">{rayon.name}</h3>
+                      <p className="text-xs text-[#64748B] mt-0.5">{rayon.faculty}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-2xl font-bold text-[#D4A017]">{rayon.totalCadres}</div>
+                    <div className="text-[10px] text-[#94A3B8] uppercase">Kader Aktif</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-[#D4A017]">{rayon.totalCadres}</div>
-                  <div className="text-[10px] text-[#94A3B8] uppercase">Kader Aktif</div>
+                <div className="mt-5 pt-4 border-t border-[#E2E8EF] flex items-center justify-between text-xs text-[#64748B]">
+                  <span>Berdiri sejak tahun {rayon.establishedYear}</span>
+                  <Link href="/kader" className="text-[#1B3D7B] font-medium hover:underline inline-flex items-center gap-1">
+                    Lihat Anggota <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
               </div>
-              <div className="mt-5 pt-4 border-t border-[#E2E8EF] flex items-center justify-between text-xs text-[#64748B]">
-                <span>Berdiri sejak tahun {rayon.establishedYear}</span>
-                <Link href="/kader" className="text-[#1B3D7B] font-medium hover:underline inline-flex items-center gap-1">
-                  Lihat Anggota <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

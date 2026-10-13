@@ -11,8 +11,9 @@ export default function Footer() {
           {/* Identity */}
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded bg-[#D4A017] flex items-center justify-center shrink-0">
-                <span className="text-[#1B3D7B] font-extrabold text-xs">PMII</span>
+              <div className="w-10 h-10 rounded-lg bg-white/10 p-1 flex items-center justify-center shrink-0 border border-white/20">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/logos/komisariat.png" alt="Logo PK PMII UNIB" className="w-full h-full object-contain" />
               </div>
               <div>
                 <div className="font-semibold text-sm tracking-wide">PK PMII Universitas Ibrahimy</div>
@@ -33,13 +34,25 @@ export default function Footer() {
               Rayon Binaan
             </h4>
             <div className="space-y-3 text-xs">
-              <div className="bg-white/5 border border-white/10 rounded p-3">
-                <div className="font-semibold text-white">Rayon Raden Rahmat</div>
-                <div className="text-white/70 text-[11px] mt-0.5">Fakultas Sains dan Teknologi (Saintek)</div>
+              <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-white/10 p-1 shrink-0 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/logos/rayon-raden-rahmat.png" alt="Rayon Raden Rahmat" className="w-full h-full object-contain" />
+                </div>
+                <div>
+                  <div className="font-semibold text-white">Rayon Raden Rahmat</div>
+                  <div className="text-white/70 text-[11px] mt-0.5">Fakultas Sains dan Teknologi (Saintek)</div>
+                </div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded p-3">
-                <div className="font-semibold text-white">Rayon Raden Umar Said</div>
-                <div className="text-white/70 text-[11px] mt-0.5">Fakultas Tarbiyah</div>
+              <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-white/10 p-1 shrink-0 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/logos/rayon-raden-umar-said.png" alt="Rayon Raden Umar Said" className="w-full h-full object-contain" />
+                </div>
+                <div>
+                  <div className="font-semibold text-white">Rayon Raden Umar Said</div>
+                  <div className="text-white/70 text-[11px] mt-0.5">Fakultas Tarbiyah</div>
+                </div>
               </div>
             </div>
           </div>

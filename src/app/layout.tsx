@@ -8,6 +8,14 @@ import { AuthProvider } from '@/lib/authContext';
 export const metadata: Metadata = {
   title: 'PK PMII Universitas Ibrahimy (UNIB) — Portal Resmi',
   description: 'Portal Resmi Pengurus Komisariat Pergerakan Mahasiswa Islam Indonesia (PK PMII) Universitas Ibrahimy Sukorejo Situbondo.',
+  icons: {
+    icon: [
+      { url: '/favicon.png', sizes: 'any', type: 'image/png' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.png',
+    apple: '/icon.png',
+  },
 };
 
 export default function RootLayout({

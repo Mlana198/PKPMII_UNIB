@@ -1,19 +1,59 @@
-import React from 'react';
+'use client';
+
+import React, { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { getArticleBySlug, getArticles } from '@/lib/storage';
+import { Article } from '@/lib/types';
 import { ArrowLeft, Share2 } from 'lucide-react';
 
-export default async function ArticleDetailPage({
+export default function ArticleDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
-  const article = getArticleBySlug(slug);
-  if (!article) notFound();
+  const { slug } = use(params);
+  const [article, setArticle] = useState<Article | null | undefined>(undefined);
+  const [related, setRelated] = useState<Article[]>([]);
 
-  const related = getArticles().filter((a) => a.id !== article.id).slice(0, 2);
+  useEffect(() => {
+    const found = getArticleBySlug(slug);
+    if (found) {
+      setArticle(found);
+      const other = getArticles()
+        .filter((a) => a.id !== found.id)
+        .slice(0, 2);
+      setRelated(other);
+    } else {
+      setArticle(null);
+    }
+  }, [slug]);
+
+  if (article === undefined) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-24 text-center text-xs text-[#64748B]">
+        Memuat warta & artikel...
+      </div>
+    );
+  }
+
+  if (article === null) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-24 text-center text-[#64748B] space-y-3">
+        <h2 className="text-xl font-bold text-[#1E293B]">Artikel Tidak Ditemukan</h2>
+        <p className="text-xs text-[#64748B]">
+          Warta atau tulisan opini yang Anda cari tidak tersedia atau tautan telah diperbarui.
+        </p>
+        <div>
+          <Link
+            href="/berita"
+            className="inline-flex items-center gap-1.5 bg-[#1B3D7B] hover:bg-[#122852] text-white text-xs font-semibold px-4 py-2 rounded transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Portal Warta & Opini
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
