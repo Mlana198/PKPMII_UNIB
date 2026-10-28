@@ -13,6 +13,7 @@ import {
   getQuizzes,
   toggleVerifyCadre,
   updateRegistrationStatus,
+  updateCadre,
   saveArticle,
   updateArticle,
   deleteArticle,
@@ -73,11 +74,28 @@ export default function AdminDashboardPage() {
   const [quizzes, setQuizzes] = useState(getQuizzes());
   const [elibrary, setELibrary] = useState(getELibrary());
 
-  // Kelola Akun modal state
+  // Kelola Akun & Edit Informasi Kader modal state
   const [kelolaModal, setKelolaModal] = useState(false);
+  const [kelolaTab, setKelolaTab] = useState<'biodata' | 'auth'>('biodata');
   const [kelolaTargetId, setKelolaTargetId] = useState('');
   const [kelolaTargetName, setKelolaTargetName] = useState('');
   const [kelolaTargetEmail, setKelolaTargetEmail] = useState('');
+  
+  // State Biodata Kader
+  const [kelolaFullName, setKelolaFullName] = useState('');
+  const [kelolaNim, setKelolaNim] = useState('');
+  const [kelolaPhoneNumber, setKelolaPhoneNumber] = useState('');
+  const [kelolaGender, setKelolaGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
+  const [kelolaRayonId, setKelolaRayonId] = useState('ryn-1');
+  const [kelolaRayonName, setKelolaRayonName] = useState('Rayon Raden Rahmat');
+  const [kelolaFaculty, setKelolaFaculty] = useState('Fakultas Sains dan Teknologi');
+  const [kelolaStudyProgram, setKelolaStudyProgram] = useState('');
+  const [kelolaEntryYear, setKelolaEntryYear] = useState<number>(2024);
+  const [kelolaCadreLevel, setKelolaCadreLevel] = useState<'Calon Anggota' | 'MAPABA' | 'PKD' | 'PKL' | 'PKN'>('MAPABA');
+  const [kelolaSpecialization, setKelolaSpecialization] = useState('Kaderisasi');
+  const [kelolaAddress, setKelolaAddress] = useState('');
+
+  // State Auth & Kredensial
   const [kelolaNewEmail, setKelolaNewEmail] = useState('');
   const [kelolaNewPassword, setKelolaNewPassword] = useState('');
   const [kelolaVerified, setKelolaVerified] = useState(false);
@@ -86,32 +104,78 @@ export default function AdminDashboardPage() {
   const [kelolaSuccess, setKelolaSuccess] = useState(false);
   const [kelolaError, setKelolaError] = useState<string | null>(null);
 
-  const openKelolaModal = (cadreId: string, name: string, email: string, isVerified: boolean) => {
-    setKelolaTargetId(cadreId);
-    setKelolaTargetName(name);
-    setKelolaTargetEmail(email);
+  const openKelolaModal = (cadre: (typeof cadres)[0]) => {
+    setKelolaTargetId(cadre.id);
+    setKelolaTargetName(cadre.fullName);
+    setKelolaTargetEmail(cadre.email);
+    setKelolaTab('biodata');
+
+    // Populate data biodata
+    setKelolaFullName(cadre.fullName || '');
+    setKelolaNim(cadre.nim || '');
+    setKelolaPhoneNumber(cadre.phoneNumber || '');
+    setKelolaGender(cadre.gender || 'Laki-laki');
+    setKelolaRayonId(cadre.rayonId || 'ryn-1');
+    setKelolaRayonName(cadre.rayonName || (cadre.rayonId === 'ryn-2' ? 'Rayon Raden Umar Said' : 'Rayon Raden Rahmat'));
+    setKelolaFaculty(cadre.faculty || (cadre.rayonId === 'ryn-2' ? 'Fakultas Tarbiyah' : 'Fakultas Sains dan Teknologi'));
+    setKelolaStudyProgram(cadre.studyProgram || '');
+    setKelolaEntryYear(cadre.entryYear || 2024);
+    setKelolaCadreLevel(cadre.cadreLevel || 'MAPABA');
+    setKelolaSpecialization(cadre.specializationInterest || 'Kaderisasi');
+    setKelolaAddress(cadre.address || '');
+
+    // Reset data kredensial
     setKelolaNewEmail('');
     setKelolaNewPassword('');
-    setKelolaVerified(isVerified);
+    setKelolaVerified(cadre.isVerified);
     setKelolaShowPass(false);
     setKelolaSuccess(false);
     setKelolaError(null);
     setKelolaModal(true);
   };
 
-  const handleKelolaSubmit = async () => {
+  const handleKelolaSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!kelolaFullName.trim()) {
+      setKelolaError('Nama lengkap kader wajib diisi.');
+      return;
+    }
+    if (!kelolaNim.trim()) {
+      setKelolaError('NIM kader wajib diisi.');
+      return;
+    }
+
     setKelolaSaving(true);
     setKelolaError(null);
+
+    // 1. Update data profil kader
+    updateCadre(kelolaTargetId, {
+      fullName: kelolaFullName.trim(),
+      nim: kelolaNim.trim(),
+      phoneNumber: kelolaPhoneNumber.trim(),
+      gender: kelolaGender,
+      rayonId: kelolaRayonId,
+      rayonName: kelolaRayonName,
+      faculty: kelolaFaculty,
+      studyProgram: kelolaStudyProgram.trim(),
+      entryYear: Number(kelolaEntryYear),
+      cadreLevel: kelolaCadreLevel,
+      specializationInterest: kelolaSpecialization,
+      address: kelolaAddress.trim(),
+    });
+
+    // 2. Update kredensial akun / email jika ada
     const res = await adminUpdateCadreAccount(kelolaTargetId, {
-      email: kelolaNewEmail || undefined,
-      password: kelolaNewPassword || undefined,
+      email: kelolaNewEmail.trim() || undefined,
+      password: kelolaNewPassword.trim() || undefined,
       isEmailVerified: kelolaVerified,
     });
+
     setKelolaSaving(false);
     if (res.success) {
       setKelolaSuccess(true);
       setCadres(getCadres());
-      setTimeout(() => setKelolaModal(false), 1500);
+      setTimeout(() => setKelolaModal(false), 1600);
     } else {
       setKelolaError(res.error || 'Gagal memperbarui akun kader.');
     }
@@ -820,7 +884,7 @@ export default function AdminDashboardPage() {
                           {c.isVerified ? 'Batalkan' : 'Verifikasi'}
                         </button>
                         <button
-                          onClick={() => openKelolaModal(c.id, c.fullName, c.email, c.isVerified)}
+                          onClick={() => openKelolaModal(c)}
                           className="text-[11px] px-2.5 py-1 rounded border border-[#1B3D7B] text-[#1B3D7B] hover:bg-blue-50 font-semibold transition-colors inline-flex items-center gap-1"
                         >
                           <KeyRound className="w-3 h-3" /> Kelola Akun
@@ -842,114 +906,329 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ====== Modal: Kelola Akun Kader ====== */}
+      {/* ====== Modal: Kelola Akun & Edit Informasi Kader ====== */}
       {kelolaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-7 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-7 space-y-5 my-auto max-h-[90vh] flex flex-col">
             {kelolaSuccess ? (
-              <div className="text-center space-y-3 py-4">
-                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-                <p className="font-bold text-[#1E293B]">Akun Berhasil Diperbarui!</p>
+              <div className="text-center space-y-3 py-10 my-auto">
+                <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
+                <h3 className="text-lg font-bold text-[#1E293B]">Data & Akun Berhasil Diperbarui!</h3>
+                <p className="text-xs text-[#64748B]">Perubahan informasi kader telah tersimpan ke sistem.</p>
               </div>
             ) : (
               <>
-                <div className="flex items-start justify-between">
+                {/* Modal Header */}
+                <div className="flex items-start justify-between border-b border-[#E2E8EF] pb-4">
                   <div>
-                    <h2 className="font-bold text-[#1E293B] flex items-center gap-2">
-                      <KeyRound className="w-4 h-4 text-[#1B3D7B]" /> Kelola Akun Kader
+                    <h2 className="text-base font-bold text-[#1E293B] flex items-center gap-2">
+                      <KeyRound className="w-4 h-4 text-[#1B3D7B]" /> Kelola Akun & Informasi Kader
                     </h2>
                     <p className="text-xs text-[#64748B] mt-0.5">
-                      <strong>{kelolaTargetName}</strong> — {kelolaTargetEmail}
+                      <strong>{kelolaTargetName}</strong> • {kelolaTargetEmail} • NIM: <span className="font-mono font-semibold text-[#1B3D7B]">{kelolaNim || '-'}</span>
                     </p>
                   </div>
-                  <button onClick={() => setKelolaModal(false)} className="text-[#94A3B8] hover:text-red-500">
-                    <X className="w-4 h-4" />
+                  <button onClick={() => setKelolaModal(false)} className="text-[#94A3B8] hover:text-red-500 p-1">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Tab Navigation dalam Modal */}
+                <div className="flex border-b border-[#E2E8EF] gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setKelolaTab('biodata')}
+                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+                      kelolaTab === 'biodata'
+                        ? 'border-[#1B3D7B] text-[#1B3D7B]'
+                        : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Biodata & Data Diri Kader
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setKelolaTab('auth')}
+                    className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+                      kelolaTab === 'auth'
+                        ? 'border-[#1B3D7B] text-[#1B3D7B]'
+                        : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
+                    }`}
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    Kredensial & Autentikasi
                   </button>
                 </div>
 
                 {kelolaError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded p-2.5 flex items-center gap-2">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {kelolaError}
+                  <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded p-3 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" /> {kelolaError}
                   </div>
                 )}
 
-                {/* Verifikasi toggle */}
-                <div className="flex items-center justify-between bg-[#F8FAFC] border border-[#E2E8EF] rounded-lg px-4 py-3">
-                  <div>
-                    <p className="text-xs font-semibold text-[#1E293B]">Status Verifikasi Email</p>
-                    <p className="text-[11px] text-[#64748B]">
-                      {kelolaVerified ? 'Akun sudah terverifikasi' : 'Akun belum terverifikasi'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setKelolaVerified((v) => !v)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded border transition-colors ${
-                      kelolaVerified
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                        : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                    }`}
-                  >
-                    {kelolaVerified ? '✓ Terverifikasi' : '⚠ Belum Terverifikasi'}
-                  </button>
-                </div>
+                {/* Form Content (Scrollable) */}
+                <form onSubmit={handleKelolaSubmit} className="overflow-y-auto pr-1 space-y-4 flex-1">
+                  {/* TAB 1: Biodata & Data Kader */}
+                  {kelolaTab === 'biodata' && (
+                    <div className="space-y-4 pt-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            Nama Lengkap *
+                          </label>
+                          <input
+                            required
+                            type="text"
+                            value={kelolaFullName}
+                            onChange={(e) => setKelolaFullName(e.target.value)}
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            NIM (Nomor Induk Mahasiswa) *
+                          </label>
+                          <input
+                            required
+                            type="text"
+                            value={kelolaNim}
+                            onChange={(e) => setKelolaNim(e.target.value)}
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          />
+                        </div>
+                      </div>
 
-                {/* Koreksi email */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
-                    Koreksi Email (kosongkan jika tidak ingin ganti)
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="email"
-                      value={kelolaNewEmail}
-                      onChange={(e) => setKelolaNewEmail(e.target.value)}
-                      placeholder={kelolaTargetEmail}
-                      className="w-full border border-[#E2E8EF] rounded pl-9 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white"
-                    />
-                  </div>
-                </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            Nomor WhatsApp / HP
+                          </label>
+                          <input
+                            type="text"
+                            value={kelolaPhoneNumber}
+                            onChange={(e) => setKelolaPhoneNumber(e.target.value)}
+                            placeholder="Contoh: 08123456789"
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            Jenis Kelamin
+                          </label>
+                          <select
+                            value={kelolaGender}
+                            onChange={(e) => setKelolaGender(e.target.value as typeof kelolaGender)}
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          >
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
+                          </select>
+                        </div>
+                      </div>
 
-                {/* Reset password */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
-                    Reset Kata Sandi (kosongkan jika tidak ingin reset)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={kelolaShowPass ? 'text' : 'password'}
-                      value={kelolaNewPassword}
-                      onChange={(e) => setKelolaNewPassword(e.target.value)}
-                      placeholder="Kata sandi baru (min. 6 karakter)"
-                      className="w-full border border-[#E2E8EF] rounded px-3.5 pr-10 py-2.5 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white"
-                    />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            Afiliasi Rayon
+                          </label>
+                          <select
+                            value={kelolaRayonId}
+                            onChange={(e) => {
+                              const id = e.target.value;
+                              setKelolaRayonId(id);
+                              setKelolaRayonName(id === 'ryn-2' ? 'Rayon Raden Umar Said' : 'Rayon Raden Rahmat');
+                              setKelolaFaculty(id === 'ryn-2' ? 'Fakultas Tarbiyah' : 'Fakultas Sains dan Teknologi');
+                            }}
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          >
+                            <option value="ryn-1">Rayon Raden Rahmat (Sains & Teknologi)</option>
+                            <option value="ryn-2">Rayon Raden Umar Said (Tarbiyah)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            Fakultas
+                          </label>
+                          <input
+                            type="text"
+                            value={kelolaFaculty}
+                            onChange={(e) => setKelolaFaculty(e.target.value)}
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            Program Studi *
+                          </label>
+                          <input
+                            required
+                            type="text"
+                            value={kelolaStudyProgram}
+                            onChange={(e) => setKelolaStudyProgram(e.target.value)}
+                            placeholder="Contoh: Teknologi Informasi"
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            Tahun Angkatan Kuliah
+                          </label>
+                          <input
+                            type="number"
+                            min={2018}
+                            max={2030}
+                            value={kelolaEntryYear}
+                            onChange={(e) => setKelolaEntryYear(Number(e.target.value))}
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                            Jenjang Kaderisasi
+                          </label>
+                          <select
+                            value={kelolaCadreLevel}
+                            onChange={(e) => setKelolaCadreLevel(e.target.value as typeof kelolaCadreLevel)}
+                            className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          >
+                            <option value="Calon Anggota">Calon Anggota</option>
+                            <option value="MAPABA">MAPABA</option>
+                            <option value="PKD">PKD</option>
+                            <option value="PKL">PKL</option>
+                            <option value="PKN">PKN</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                          Peminatan / Minat Bakat Kader
+                        </label>
+                        <select
+                          value={kelolaSpecialization}
+                          onChange={(e) => setKelolaSpecialization(e.target.value)}
+                          className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                        >
+                          <option value="Kaderisasi & Instruktur">Kaderisasi & Instruktur</option>
+                          <option value="Kajian Aswaja & Keislaman">Kajian Aswaja & Keislaman</option>
+                          <option value="Riset, Literasi & Kepenulisan">Riset, Literasi & Kepenulisan</option>
+                          <option value="Media, Jurnalistik & Desain Grafis">Media, Jurnalistik & Desain Grafis</option>
+                          <option value="Advokasi, Hukum & Kebijakan Publik">Advokasi, Hukum & Kebijakan Publik</option>
+                          <option value="Teknologi Informasi & Digitalisasi">Teknologi Informasi & Digitalisasi</option>
+                          <option value="Ekonomi Kreatif & Kewirausahaan">Ekonomi Kreatif & Kewirausahaan</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                          Alamat Domisili / Tempat Tinggal
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={kelolaAddress}
+                          onChange={(e) => setKelolaAddress(e.target.value)}
+                          placeholder="Alamat domisili atau asrama/pondok pesantren kader..."
+                          className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 2: Kredensial & Autentikasi */}
+                  {kelolaTab === 'auth' && (
+                    <div className="space-y-4 pt-1">
+                      {/* Verifikasi toggle */}
+                      <div className="flex items-center justify-between bg-[#F8FAFC] border border-[#E2E8EF] rounded-lg px-4 py-3">
+                        <div>
+                          <p className="text-xs font-semibold text-[#1E293B]">Status Verifikasi Email Akun</p>
+                          <p className="text-[11px] text-[#64748B]">
+                            {kelolaVerified ? 'Akun telah berstatus terverifikasi' : 'Akun belum diverifikasi oleh pemilik'}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setKelolaVerified((v) => !v)}
+                          className={`px-3 py-1.5 text-xs font-semibold rounded border transition-colors ${
+                            kelolaVerified
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                          }`}
+                        >
+                          {kelolaVerified ? '✓ Terverifikasi' : '⚠ Belum Terverifikasi'}
+                        </button>
+                      </div>
+
+                      {/* Koreksi email */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                          Koreksi Email Akun (kosongkan jika tidak ingin ganti)
+                        </label>
+                        <div className="relative">
+                          <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="email"
+                            value={kelolaNewEmail}
+                            onChange={(e) => setKelolaNewEmail(e.target.value)}
+                            placeholder={kelolaTargetEmail}
+                            className="w-full border border-[#E2E8EF] rounded pl-9 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          />
+                        </div>
+                        <p className="text-[10px] text-[#64748B] mt-1">
+                          Email aktif saat ini: <span className="font-mono font-medium text-[#1E293B]">{kelolaTargetEmail}</span>
+                        </p>
+                      </div>
+
+                      {/* Reset password */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
+                          Reset Kata Sandi (kosongkan jika tidak ingin reset)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={kelolaShowPass ? 'text' : 'password'}
+                            value={kelolaNewPassword}
+                            onChange={(e) => setKelolaNewPassword(e.target.value)}
+                            placeholder="Kata sandi baru (minimal 6 karakter)"
+                            className="w-full border border-[#E2E8EF] rounded px-3.5 pr-10 py-2.5 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setKelolaShowPass((p) => !p)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
+                          >
+                            {kelolaShowPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-[#64748B] mt-1">
+                          Gunakan opsi ini jika kader lupa kata sandi dan meminta bantuan admin untuk meresetnya.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E2E8EF]">
                     <button
                       type="button"
-                      onClick={() => setKelolaShowPass((p) => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
+                      onClick={() => setKelolaModal(false)}
+                      className="px-4 py-2.5 border border-[#E2E8EF] text-[#64748B] hover:text-[#1E293B] text-xs font-medium rounded transition-colors"
                     >
-                      {kelolaShowPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={kelolaSaving}
+                      className="bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold px-5 py-2.5 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {kelolaSaving ? 'Menyimpan Perubahan...' : 'Simpan Semua Perubahan'}
                     </button>
                   </div>
-                </div>
-
-                <div className="flex gap-3 pt-1">
-                  <button
-                    onClick={handleKelolaSubmit}
-                    disabled={kelolaSaving}
-                    className="flex-1 bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-2.5 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    {kelolaSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
-                  </button>
-                  <button
-                    onClick={() => setKelolaModal(false)}
-                    className="px-4 py-2.5 border border-[#E2E8EF] text-[#64748B] hover:text-[#1E293B] text-xs font-medium rounded transition-colors"
-                  >
-                    Batal
-                  </button>
-                </div>
+                </form>
               </>
             )}
           </div>
