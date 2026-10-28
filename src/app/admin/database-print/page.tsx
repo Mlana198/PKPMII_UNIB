@@ -21,10 +21,11 @@ export default function DatabasePrintPage() {
     }
   }, []);
 
-
-
-
-  const filteredCadres = cadres.filter((c) => {
+  useEffect(() => {
+    if (!isLoading && (!user || !isAdmin)) {
+      router.push('/unauthorized');
+    }
+  }, [user, isAdmin, isLoading, router]);  const filteredCadres = cadres.filter((c) => {
     if (filterRayon === 'ALL') return true;
     if (filterRayon === 'SAINTEK') return c.rayonId === 'ryn-1' || c.faculty?.includes('SAINS');
     if (filterRayon === 'TARBIYAH') return c.rayonId === 'ryn-2' || c.faculty?.includes('TARBIYAH');

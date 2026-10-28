@@ -3,14 +3,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Quiz, QuizAttempt } from '@/lib/types';
 import { saveQuizAttempt } from '@/lib/storage';
+import { useAuth } from '@/lib/authContext';
 import { Clock, AlertTriangle, RotateCcw, BookOpen, ArrowRight, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function QuizEngine({ quiz }: { quiz: Quiz }) {
+  const { user, cadreProfile } = useAuth();
   const [hasStarted, setHasStarted] = useState(false);
   const [participantName, setParticipantName] = useState('');
   const [participantNim, setParticipantNim] = useState('');
   const [participantRayon, setParticipantRayon] = useState('Rayon Raden Rahmat');
+
+  useEffect(() => {
+    if (cadreProfile) {
+      if (cadreProfile.fullName) setParticipantName(cadreProfile.fullName);
+      if (cadreProfile.nim) setParticipantNim(cadreProfile.nim);
+      if (cadreProfile.rayonName) setParticipantRayon(cadreProfile.rayonName);
+    } else if (user?.email && !participantName) {
+      setParticipantName(user.email.split('@')[0]);
+    }
+  }, [cadreProfile, user]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState(quiz.durationMinutes * 60);

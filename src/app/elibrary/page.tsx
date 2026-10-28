@@ -24,6 +24,50 @@ export default function ELibraryPage() {
     });
   }, [items, selectedCategory, searchQuery]);
 
+  const handleDownload = (item: (typeof items)[0]) => {
+    if (item.downloadUrl && (item.downloadUrl.startsWith('http://') || item.downloadUrl.startsWith('https://') || item.downloadUrl.startsWith('blob:'))) {
+      window.open(item.downloadUrl, '_blank');
+      return;
+    }
+
+    const documentContent = [
+      '========================================================================',
+      '        PENGURUS KOMISARIAT PERGERAKAN MAHASISWA ISLAM INDONESIA        ',
+      '                   UNIVERSITAS IBRAHIMY SUKOREJO SITUBONDO               ',
+      '========================================================================',
+      '',
+      `Judul Dokumen  : ${item.title}`,
+      `Penyusun       : ${item.author}`,
+      `Kategori       : ${item.category}`,
+      `Tahun Terbit   : ${item.publishedYear}`,
+      `Estimasi Hlm   : ${item.pageCount} Halaman`,
+      `Ukuran Berkas  : ${item.fileSize}`,
+      '',
+      'RINGKASAN & DESKRIPSI MATERI:',
+      '------------------------------------------------------------------------',
+      item.description,
+      '',
+      'CATATAN RESMI:',
+      'Dokumen literatur kaderisasi ini diunduh secara sah melalui Sistem E-Library',
+      'PK PMII Universitas Ibrahimy untuk keperluan pembinaan & studi kader.',
+      'Dilarang memperbanyak atau memanipulasi isi tanpa izin resmi Pengurus.',
+      '',
+      `Diunduh pada: ${new Date().toLocaleString('id-ID')}`,
+      'Salam Pergerakan! Tangan Terkepal dan Maju ke Muka!',
+    ].join('\n');
+
+    const blob = new Blob([documentContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const safeTitle = item.title.replace(/[/\\?%*:|"<>]/g, '_');
+    link.download = `[MODUL-PMII-UNIB]_${safeTitle}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-8">
       {/* Header */}
@@ -138,10 +182,10 @@ export default function ELibraryPage() {
                   <td className="px-5 py-4 text-right">
                     {user ? (
                       <button
-                        onClick={() => alert(`Mengunduh modul resmi: ${item.title}`)}
+                        onClick={() => handleDownload(item)}
                         className="inline-flex items-center gap-1.5 text-xs text-[#1B3D7B] font-semibold hover:text-[#D4A017] transition-colors"
                       >
-                        <Download className="w-3.5 h-3.5" /> Unduh PDF
+                        <Download className="w-3.5 h-3.5" /> Unduh Dokumen
                       </button>
                     ) : (
                       <Link

@@ -6,6 +6,36 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 const fromEmail = process.env.EMAIL_FROM || 'PMII UNIB <onboarding@resend.dev>';
 
+// In-Memory Rate Limiter: Maksimal 5 permintaan OTP per email dalam 10 menit
+const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
+
+function isRateLimited(key: string, limit = 5, windowMs = 10 * 60 * 1000): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(key);
+
+  if (!record || now > record.expiresAt) {
+    rateLimitMap.set(key, { count: 1, expiresAt: now + windowMs });
+    return false;
+  }
+
+  if (record.count >= limit) {
+    return true;
+  }
+
+  record.count += 1;
+  return false;
+}
+
+// Sanitasi string untuk mencegah HTML injection di dalam email
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface SendEmailPayload {
   email: string;
   code: string;
@@ -18,17 +48,60 @@ export async function POST(req: Request) {
     const body: SendEmailPayload = await req.json();
     const { email, code, type, fullName } = body;
 
-    if (!email || !code) {
+    // Validasi parameter wajib
+    if (!email || !code || !type) {
       return NextResponse.json(
-        { success: false, error: 'Email dan kode verifikasi wajib disertakan.' },
+        { success: false, error: 'Email, tipe, dan kode verifikasi wajib disertakan.' },
         { status: 400 }
       );
     }
 
+    // Validasi format email yang ketat
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!emailRegex.test(cleanEmail) || cleanEmail.length > 100) {
+      return NextResponse.json(
+        { success: false, error: 'Format email tidak valid.' },
+        { status: 400 }
+      );
+    }
+
+    // Validasi format kode OTP (hanya alfanumerik 4 - 8 digit)
+    const codeRegex = /^[a-zA-Z0-9]{4,8}$/;
+    const cleanCode = code.trim();
+    if (!codeRegex.test(cleanCode)) {
+      return NextResponse.json(
+        { success: false, error: 'Format kode OTP tidak valid.' },
+        { status: 400 }
+      );
+    }
+
+    // Validasi tipe email
+    if (type !== 'verification' && type !== 'reset') {
+      return NextResponse.json(
+        { success: false, error: 'Tipe permintaan email tidak valid.' },
+        { status: 400 }
+      );
+    }
+
+    // Rate Limiting Protection (Mencegah abuse & credit exhaustion)
+    if (isRateLimited(cleanEmail)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Terlalu banyak permintaan kode verifikasi ke email ini. Silakan tunggu beberapa menit sebelum mencoba kembali.' 
+        },
+        { status: 429 }
+      );
+    }
+
+    const safeFullName = fullName ? escapeHtml(fullName.trim().slice(0, 80)) : '';
+    const safeCode = escapeHtml(cleanCode);
+
     const isVerification = type === 'verification';
     const subject = isVerification
-      ? `[PK PMII UNIB] Kode Verifikasi Email Anda: ${code}`
-      : `[PK PMII UNIB] Kode Reset Kata Sandi Anda: ${code}`;
+      ? `[PK PMII UNIB] Kode Verifikasi Email Anda: ${safeCode}`
+      : `[PK PMII UNIB] Kode Reset Kata Sandi Anda: ${safeCode}`;
 
     const title = isVerification ? 'Verifikasi Akun Kader' : 'Permintaan Reset Kata Sandi';
     const desc = isVerification
@@ -55,13 +128,13 @@ export async function POST(req: Request) {
             <td style="padding: 32px 32px 24px 32px;">
               <h2 style="color: #1B3D7B; font-size: 18px; font-weight: 700; margin-top: 0; margin-bottom: 12px;">${title}</h2>
               <p style="font-size: 14px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
-                Salam pergerakan, ${fullName ? `<strong>${fullName}</strong>` : 'Sahabat/Sahabati'}.<br/>
+                Salam pergerakan, ${safeFullName ? `<strong>${safeFullName}</strong>` : 'Sahabat/Sahabati'}.<br/>
                 ${desc}
               </p>
               
               <div style="background-color: #f8fafc; border: 2px dashed #1B3D7B; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
                 <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 6px;">Kode Keamanan Anda</span>
-                <span style="font-size: 34px; font-weight: 800; font-family: monospace; letter-spacing: 8px; color: #1B3D7B;">${code}</span>
+                <span style="font-size: 34px; font-weight: 800; font-family: monospace; letter-spacing: 8px; color: #1B3D7B;">${safeCode}</span>
               </div>
 
               <p style="font-size: 12px; line-height: 1.5; color: #64748b; margin-bottom: 0;">
@@ -84,7 +157,7 @@ export async function POST(req: Request) {
     if (resend) {
       const { data, error } = await resend.emails.send({
         from: fromEmail,
-        to: email,
+        to: cleanEmail,
         subject,
         html: htmlContent,
       });
@@ -109,7 +182,7 @@ export async function POST(req: Request) {
       });
     } else {
       // Jika RESEND_API_KEY belum dipasang di .env.local, log ke console server
-      console.warn(`[OTP Server Log] RESEND_API_KEY tidak terdeteksi. Kode OTP untuk ${email} adalah: ${code}`);
+      console.warn(`[OTP Server Log] RESEND_API_KEY tidak terdeteksi. Kode OTP untuk ${cleanEmail} adalah: ${cleanCode}`);
       return NextResponse.json({
         success: true,
         message: 'Kode OTP telah diproses.',

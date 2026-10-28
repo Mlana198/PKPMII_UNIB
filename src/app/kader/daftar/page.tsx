@@ -4,11 +4,13 @@ import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { saveCadre, getRayons } from '@/lib/storage';
+import { useAuth } from '@/lib/authContext';
 import { FormalCadreLevel } from '@/lib/types';
 import { ArrowLeft, Upload, X, User } from 'lucide-react';
 
 export default function DaftarKaderPage() {
   const router = useRouter();
+  const { isAdmin } = useAuth();
   const rayons = getRayons();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -126,10 +128,10 @@ export default function DaftarKaderPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
       <Link
-        href="/kader"
+        href={isAdmin ? "/kader" : "/"}
         className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#1B3D7B] mb-8 transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Database Kader
+        <ArrowLeft className="w-3.5 h-3.5" /> {isAdmin ? 'Kembali ke Database Kader' : 'Kembali ke Beranda'}
       </Link>
 
       <div className="mb-8 flex items-start gap-4">

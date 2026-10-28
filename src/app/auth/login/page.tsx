@@ -52,7 +52,7 @@ export default function LoginPage() {
     if (res.success) {
       const urlParams = new URLSearchParams(window.location.search);
       const redirectUrl = urlParams.get('redirect');
-      if (cleanEmail.includes('admin')) {
+      if (cleanEmail === 'admin@pmii-unib.org') {
         router.push(redirectUrl || '/admin');
       } else {
         router.push(redirectUrl || '/kader/dashboard');

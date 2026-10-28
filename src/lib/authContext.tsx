@@ -505,7 +505,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isAdmin = Boolean(user?.email === 'admin@pmii-unib.org' || user?.email?.includes('admin'));
+  const isAdmin = Boolean(
+    user?.email === 'admin@pmii-unib.org' ||
+    account?.role === 'superadmin'
+  );
 
   return (
     <AuthContext.Provider

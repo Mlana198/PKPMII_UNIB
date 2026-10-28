@@ -3,6 +3,7 @@
 import React, { use } from 'react';
 import Link from 'next/link';
 import { getCadres } from '@/lib/storage';
+import { useAuth } from '@/lib/authContext';
 import EKTAViewer from '@/components/EKTAViewer';
 import { ArrowLeft } from 'lucide-react';
 
@@ -12,14 +13,18 @@ export default function CadreKtaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { user, isAdmin } = useAuth();
   const cadre = getCadres().find((c) => c.id === id);
+
+  const backHref = isAdmin ? '/kader' : user ? '/kader/dashboard' : '/';
+  const backLabel = isAdmin ? 'Kembali ke Database Kader' : user ? 'Kembali ke Dashboard Saya' : 'Kembali ke Beranda';
 
   if (!cadre) {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center">
         <p className="text-[#64748B] text-sm">Data kader tidak ditemukan dalam sistem.</p>
-        <Link href="/kader" className="text-[#1B3D7B] text-xs mt-2 underline inline-block">
-          Kembali ke direktori anggota
+        <Link href={backHref} className="text-[#1B3D7B] text-xs mt-2 underline inline-block">
+          {backLabel}
         </Link>
       </div>
     );
@@ -28,10 +33,10 @@ export default function CadreKtaPage({
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 space-y-8">
       <Link
-        href="/kader"
+        href={backHref}
         className="inline-flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#1B3D7B] transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Database Kader
+        <ArrowLeft className="w-3.5 h-3.5" /> {backLabel}
       </Link>
 
       <div className="text-center space-y-1">

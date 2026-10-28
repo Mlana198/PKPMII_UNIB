@@ -10,11 +10,9 @@ import { ArrowLeft } from 'lucide-react';
 export default function QuizExecutionPage({
   params,
 }: {
-  params: Promise<{ quizId: string }> | { quizId: string };
+  params: Promise<{ quizId: string }>;
 }) {
-  // Dukung Promise params (Next.js 15+) maupun sync params
-  const resolvedParams = typeof (params as any)?.then === 'function' ? use(params as Promise<{ quizId: string }>) : (params as { quizId: string });
-  const quizId = resolvedParams?.quizId;
+  const { quizId } = use(params);
 
   const [quiz, setQuiz] = useState<Quiz | null | undefined>(undefined);
   const [availableQuizzes, setAvailableQuizzes] = useState<Quiz[]>([]);
