@@ -168,7 +168,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" suppressHydrationWarning>
           {/* Section: Upload Pas Foto */}
           <div className="border-b border-[#E2E8EF] pb-5 space-y-3">
             <h2 className="text-xs font-bold text-[#1B3D7B] uppercase tracking-wider flex items-center gap-1.5">
@@ -213,6 +213,7 @@ export default function RegisterPage() {
                 <div className="space-y-2.5 text-center sm:text-left flex-1">
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     <input
+                      suppressHydrationWarning
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
@@ -228,6 +229,7 @@ export default function RegisterPage() {
                     </label>
                     {avatarPreview && (
                       <button
+                        suppressHydrationWarning
                         type="button"
                         onClick={removeAvatar}
                         className="inline-flex items-center gap-1 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-medium px-3 py-2 rounded-lg transition-colors"
@@ -260,6 +262,7 @@ export default function RegisterPage() {
               <div className="relative">
                 <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
+                  suppressHydrationWarning
                   required
                   type="email"
                   value={email}
@@ -277,6 +280,7 @@ export default function RegisterPage() {
                 </label>
                 <div className="relative">
                   <input
+                    suppressHydrationWarning
                     required
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -285,6 +289,7 @@ export default function RegisterPage() {
                     className={inputClass + ' pr-10'}
                   />
                   <button
+                    suppressHydrationWarning
                     type="button"
                     onClick={() => setShowPassword((p) => !p)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
@@ -299,6 +304,7 @@ export default function RegisterPage() {
                 </label>
                 <div className="relative">
                   <input
+                    suppressHydrationWarning
                     required
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
@@ -307,6 +313,7 @@ export default function RegisterPage() {
                     className={inputClass + ' pr-10'}
                   />
                   <button
+                    suppressHydrationWarning
                     type="button"
                     onClick={() => setShowConfirmPassword((p) => !p)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
@@ -329,6 +336,7 @@ export default function RegisterPage() {
                 Nama Lengkap Sesuai KTM *
               </label>
               <input
+                suppressHydrationWarning
                 required
                 type="text"
                 value={fullName}
@@ -345,6 +353,7 @@ export default function RegisterPage() {
                   Jenis Kelamin *
                 </label>
                 <select
+                  suppressHydrationWarning
                   value={gender}
                   onChange={(e) => setGender(e.target.value as 'Laki-laki' | 'Perempuan')}
                   className={inputClass}
@@ -359,6 +368,7 @@ export default function RegisterPage() {
                   Nomor Induk Mahasiswa (NIM) *
                 </label>
                 <input
+                  suppressHydrationWarning
                   required
                   type="text"
                   value={nim}
@@ -375,6 +385,7 @@ export default function RegisterPage() {
                   Nomor WhatsApp *
                 </label>
                 <input
+                  suppressHydrationWarning
                   required
                   type="tel"
                   value={phoneNumber}
@@ -388,6 +399,7 @@ export default function RegisterPage() {
                   Rayon Binaan *
                 </label>
                 <select
+                  suppressHydrationWarning
                   value={rayonId}
                   onChange={(e) => setRayonId(e.target.value)}
                   className={inputClass}
@@ -407,6 +419,7 @@ export default function RegisterPage() {
                   Program Studi *
                 </label>
                 <input
+                  suppressHydrationWarning
                   required
                   type="text"
                   value={studyProgram}
@@ -420,6 +433,7 @@ export default function RegisterPage() {
                   Tahun Angkatan Kuliah
                 </label>
                 <input
+                  suppressHydrationWarning
                   type="number"
                   min={2018}
                   max={2030}
@@ -435,6 +449,7 @@ export default function RegisterPage() {
                 Jenjang Kaderisasi
               </label>
               <select
+                suppressHydrationWarning
                 value={cadreLevel}
                 onChange={(e) => setCadreLevel(e.target.value as FormalCadreLevel)}
                 className={inputClass}
@@ -448,6 +463,7 @@ export default function RegisterPage() {
           </div>
 
           <button
+            suppressHydrationWarning
             type="submit"
             disabled={submitting}
             className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-3 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2 mt-4"

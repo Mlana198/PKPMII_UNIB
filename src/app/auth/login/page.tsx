@@ -193,7 +193,7 @@ export default function LoginPage() {
         )}
 
         {/* Form Login */}
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs" suppressHydrationWarning>
           {/* Email */}
           <div>
             <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1.5">
@@ -207,6 +207,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@email.com"
+                suppressHydrationWarning
                 className="w-full border border-[#E2E8EF] rounded pl-9 pr-3.5 py-2.5 text-[#1E293B] focus:outline-none focus:border-[#1B3D7B] bg-white placeholder-[#94A3B8]"
               />
             </div>
@@ -220,6 +221,7 @@ export default function LoginPage() {
               </label>
               <button
                 type="button"
+                suppressHydrationWarning
                 onClick={() => {
                   setForgotModal(true);
                   setForgotEmail(email);
@@ -237,10 +239,12 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                suppressHydrationWarning
                 className="w-full border border-[#E2E8EF] rounded pl-9 pr-10 py-2.5 text-[#1E293B] focus:outline-none focus:border-[#1B3D7B] bg-white placeholder-[#94A3B8]"
               />
               <button
                 type="button"
+                suppressHydrationWarning
                 onClick={() => setShowPassword((p) => !p)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B] transition-colors"
                 title={showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
@@ -253,6 +257,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
+            suppressHydrationWarning
             className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-3 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2 mt-2"
           >
             {submitting ? 'Memeriksa...' : 'Masuk Sekarang'} <ArrowRight className="w-3.5 h-3.5" />
