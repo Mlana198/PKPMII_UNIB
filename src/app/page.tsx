@@ -1,11 +1,40 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { getArticles, getEvents, getCadres, getRayons } from '@/lib/storage';
+import { Article, TrainingEvent, CadreProfile, Rayon } from '@/lib/types';
 import { INITIAL_ARTICLES, INITIAL_EVENTS, INITIAL_RAYONS, INITIAL_CADRES } from '@/lib/mockData';
 
 export default function HomePage() {
-  const latestArticles = INITIAL_ARTICLES.slice(0, 3);
-  const activeEvents = INITIAL_EVENTS.slice(0, 2);
+  const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
+  const [events, setEvents] = useState<TrainingEvent[]>(INITIAL_EVENTS);
+  const [cadres, setCadres] = useState<CadreProfile[]>(INITIAL_CADRES);
+  const [rayons, setRayons] = useState<Rayon[]>(INITIAL_RAYONS);
+
+  const loadData = () => {
+    setArticles(getArticles());
+    setEvents(getEvents());
+    setCadres(getCadres());
+    setRayons(getRayons());
+  };
+
+  useEffect(() => {
+    loadData();
+
+    const handleStorageUpdate = () => loadData();
+    window.addEventListener('storage', handleStorageUpdate);
+    window.addEventListener('pmii-storage-updated', handleStorageUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageUpdate);
+      window.removeEventListener('pmii-storage-updated', handleStorageUpdate);
+    };
+  }, []);
+
+  const latestArticles = articles.slice(0, 3);
+  const activeEvents = events.slice(0, 2);
 
   return (
     <div className="space-y-16 pb-20">
@@ -48,19 +77,19 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 -mt-8">
         <div className="bg-white border border-[#E2E8EF] rounded-lg shadow-sm grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#E2E8EF]">
           <div className="p-6 text-center">
-            <div className="text-3xl font-bold text-[#1B3D7B]">{INITIAL_CADRES.length}</div>
+            <div className="text-3xl font-bold text-[#1B3D7B]">{cadres.length}</div>
             <div className="text-xs text-[#64748B] uppercase tracking-wide mt-1">Kader Terdata</div>
           </div>
           <div className="p-6 text-center">
-            <div className="text-3xl font-bold text-[#D4A017]">{INITIAL_RAYONS.length}</div>
+            <div className="text-3xl font-bold text-[#D4A017]">{rayons.length}</div>
             <div className="text-xs text-[#64748B] uppercase tracking-wide mt-1">Rayon Binaan</div>
           </div>
           <div className="p-6 text-center">
-            <div className="text-3xl font-bold text-[#1B3D7B]">{INITIAL_EVENTS.length}</div>
+            <div className="text-3xl font-bold text-[#1B3D7B]">{events.length}</div>
             <div className="text-xs text-[#64748B] uppercase tracking-wide mt-1">Agenda Kaderisasi</div>
           </div>
           <div className="p-6 text-center">
-            <div className="text-3xl font-bold text-[#D4A017]">{INITIAL_ARTICLES.length}</div>
+            <div className="text-3xl font-bold text-[#D4A017]">{articles.length}</div>
             <div className="text-xs text-[#64748B] uppercase tracking-wide mt-1">Warta & Opini</div>
           </div>
         </div>
@@ -75,7 +104,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {INITIAL_RAYONS.map((rayon) => {
+          {rayons.map((rayon) => {
             const logoPath = rayon.id === 'ryn-2'
               ? '/images/logos/rayon-raden-umar-said.png'
               : '/images/logos/rayon-raden-rahmat.png';

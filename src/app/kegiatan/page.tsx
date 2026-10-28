@@ -11,6 +11,14 @@ export default function KegiatanIndexPage() {
 
   useEffect(() => {
     setEvents(getEvents());
+
+    const handleUpdate = () => setEvents(getEvents());
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('pmii-storage-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('pmii-storage-updated', handleUpdate);
+    };
   }, []);
 
   return (

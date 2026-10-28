@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { Search, CheckCircle, Clock, CreditCard, ShieldCheck, Printer, FileSpreadsheet } from 'lucide-react';
 import { getCadres, getRayons } from '@/lib/storage';
+import { CadreProfile, Rayon } from '@/lib/types';
 
 export default function KaderDirectoryPage() {
   const router = useRouter();
@@ -13,8 +14,24 @@ export default function KaderDirectoryPage() {
   const [selectedRayon, setSelectedRayon] = useState('all');
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const cadres = getCadres();
-  const rayons = getRayons();
+  const [cadres, setCadres] = useState<CadreProfile[]>([]);
+  const [rayons, setRayons] = useState<Rayon[]>([]);
+
+  useEffect(() => {
+    setCadres(getCadres());
+    setRayons(getRayons());
+
+    const handleUpdate = () => {
+      setCadres(getCadres());
+      setRayons(getRayons());
+    };
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('pmii-storage-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('pmii-storage-updated', handleUpdate);
+    };
+  }, []);
 
   // Proteksi Akses: Hanya Admin / Pengurus yang bisa melihat seluruh database kader
   useEffect(() => {

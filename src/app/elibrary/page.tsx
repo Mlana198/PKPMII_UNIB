@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Download, FileText, Lock, LogIn, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { getELibrary } from '@/lib/storage';
+import { ELibraryItem } from '@/lib/types';
 
 const CATEGORIES = ['Semua', 'AD/ART', 'Nilai Dasar Pergerakan', 'Materi Mapaba', 'Materi PKD'] as const;
 
@@ -12,7 +13,19 @@ export default function ELibraryPage() {
   const { user, isLoading } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
-  const items = getELibrary();
+  const [items, setItems] = useState<ELibraryItem[]>([]);
+
+  useEffect(() => {
+    setItems(getELibrary());
+
+    const handleUpdate = () => setItems(getELibrary());
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('pmii-storage-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('pmii-storage-updated', handleUpdate);
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {

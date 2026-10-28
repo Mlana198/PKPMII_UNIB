@@ -66,8 +66,15 @@ function setItem<T>(key: string, value: T): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    window.dispatchEvent(new CustomEvent('pmii-storage-updated', { detail: { key } }));
   } catch (e) {
     console.error('Storage error:', e);
+  }
+}
+
+export function notifyStorageUpdated(key?: string): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('pmii-storage-updated', { detail: { key } }));
   }
 }
 
@@ -78,7 +85,15 @@ export function getRayons(): Rayon[] {
 
 // Cadres
 export function getCadres(): CadreProfile[] {
-  return getItem<CadreProfile[]>(STORAGE_KEYS.CADRES, INITIAL_CADRES);
+  const cadres = getItem<CadreProfile[]>(STORAGE_KEYS.CADRES, INITIAL_CADRES);
+  const OLD_UNHIJAB_AVATAR = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80';
+  const NEW_HIJAB_AVATAR = 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=400&q=80';
+  return cadres.map((c) => {
+    if (c.gender === 'Perempuan' && c.avatarUrl === OLD_UNHIJAB_AVATAR) {
+      return { ...c, avatarUrl: NEW_HIJAB_AVATAR };
+    }
+    return c;
+  });
 }
 
 export function saveCadre(cadre: Omit<CadreProfile, 'id' | 'createdAt' | 'ktaNumber' | 'isVerified'>): CadreProfile {
@@ -204,7 +219,15 @@ export function resetPasswordAccount(email: string, newPassword: string): { succ
 
 // Articles
 export function getArticles(): Article[] {
-  return getItem<Article[]>(STORAGE_KEYS.ARTICLES, INITIAL_ARTICLES);
+  const articles = getItem<Article[]>(STORAGE_KEYS.ARTICLES, INITIAL_ARTICLES);
+  const OLD_UNHIJAB_IMG = 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1200&q=80';
+  const NEW_KOPRI_IMG = 'https://images.unsplash.com/photo-1584441405886-bc91be61e56a?auto=format&fit=crop&w=1200&q=80';
+  return articles.map((a) => {
+    if (a.coverImage === OLD_UNHIJAB_IMG) {
+      return { ...a, coverImage: NEW_KOPRI_IMG };
+    }
+    return a;
+  });
 }
 
 export function getArticleBySlug(slug: string): Article | undefined {
@@ -242,7 +265,13 @@ export function deleteArticle(id: string): Article[] {
 
 // Events
 export function getEvents(): TrainingEvent[] {
-  return getItem<TrainingEvent[]>(STORAGE_KEYS.EVENTS, INITIAL_EVENTS);
+  const events = getItem<TrainingEvent[]>(STORAGE_KEYS.EVENTS, INITIAL_EVENTS);
+  return events.map((e) => {
+    if (e.id === 'evt-mapaba-2026' && e.title.includes('MAPABA RAYA')) {
+      return { ...e, title: e.title.replace('MAPABA RAYA', 'MAPABA') };
+    }
+    return e;
+  });
 }
 
 export function getEventBySlug(slug: string): TrainingEvent | undefined {

@@ -1,16 +1,29 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { getArticles } from '@/lib/storage';
+import { Article } from '@/lib/types';
 
 const CATEGORIES = ['Semua', 'Warta Komisariat', 'Opini Kader', 'Kajian Aswaja', 'Warta KOPRI'] as const;
 
 export default function BeritaPage() {
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
-  const articles = getArticles();
+  const [articles, setArticles] = useState<Article[]>([]);
+
+  useEffect(() => {
+    setArticles(getArticles());
+
+    const handleUpdate = () => setArticles(getArticles());
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('pmii-storage-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('pmii-storage-updated', handleUpdate);
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     return articles.filter((a) => {

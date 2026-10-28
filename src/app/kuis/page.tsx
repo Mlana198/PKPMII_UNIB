@@ -13,6 +13,14 @@ export default function KuisIndexPage() {
 
   useEffect(() => {
     setQuizzes(getQuizzes());
+
+    const handleUpdate = () => setQuizzes(getQuizzes());
+    window.addEventListener('storage', handleUpdate);
+    window.addEventListener('pmii-storage-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('pmii-storage-updated', handleUpdate);
+    };
   }, []);
 
 
