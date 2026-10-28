@@ -140,7 +140,7 @@ export default function RegisterPage() {
 
   return (
     <>
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12" suppressHydrationWarning>
         <div className="bg-white border border-[#E2E8EF] rounded-xl p-6 sm:p-9 shadow-sm space-y-6">
         {/* Header */}
         <div className="flex items-start gap-4">

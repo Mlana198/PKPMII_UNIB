@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className="h-full antialiased scroll-smooth">
-      <body className="min-h-full flex flex-col bg-[#F8FAFC] text-[#1E293B]">
+    <html lang="id" className="h-full antialiased scroll-smooth" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-[#F8FAFC] text-[#1E293B]" suppressHydrationWarning>
         <AuthProvider>
           <Suspense fallback={<div className="h-16 bg-[#1B3D7B]" />}>
             <Navbar />

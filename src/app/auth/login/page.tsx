@@ -172,7 +172,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 py-16">
+    <div className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 py-16" suppressHydrationWarning>
       <div className="w-full max-w-md bg-white border border-[#E2E8EF] rounded-xl p-7 sm:p-9 shadow-sm space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
