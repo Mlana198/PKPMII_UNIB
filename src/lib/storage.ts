@@ -218,15 +218,37 @@ export function resetPasswordAccount(email: string, newPassword: string): { succ
 }
 
 // Articles
+const HUMAS_KEYWORDS_LC = ['biro humas', 'tim humas', 'redaksi', 'panitia', 'pengurus', 'komisariat'];
+function isHumasAuthorName(name: string): boolean {
+  const lower = name.toLowerCase();
+  return HUMAS_KEYWORDS_LC.some((kw) => lower.includes(kw));
+}
+
 export function getArticles(): Article[] {
   const articles = getItem<Article[]>(STORAGE_KEYS.ARTICLES, INITIAL_ARTICLES);
   const OLD_UNHIJAB_IMG = 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1200&q=80';
   const NEW_KOPRI_IMG = 'https://images.unsplash.com/photo-1584441405886-bc91be61e56a?auto=format&fit=crop&w=1200&q=80';
+  // Avatar yang pernah dipakai sebagai stok untuk art-001 (foto laki-laki asing)
+  const OLD_FAKE_MALE_AVATAR = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80';
   return articles.map((a) => {
-    if (a.coverImage === OLD_UNHIJAB_IMG) {
-      return { ...a, coverImage: NEW_KOPRI_IMG };
+    let updated = { ...a };
+    // Koreksi cover KOPRI lama
+    if (updated.coverImage === OLD_UNHIJAB_IMG) {
+      updated = { ...updated, coverImage: NEW_KOPRI_IMG };
     }
-    return a;
+    // Hapus avatar stok laki-laki asing pada artikel opini (bukan data kader nyata)
+    if (updated.authorAvatar === OLD_FAKE_MALE_AVATAR && updated.id === 'art-001') {
+      updated = { ...updated, authorAvatar: undefined };
+    }
+    // Hapus authorAvatar dari artikel milik Humas/Redaksi (akan digantikan logo di UI)
+    if (isHumasAuthorName(updated.authorName) && updated.authorAvatar) {
+      updated = { ...updated, authorAvatar: undefined };
+    }
+    // Koreksi nama penulis artikel KOPRI dari nama rekaan ke nama aktual
+    if (updated.id === 'art-002' && updated.authorName === 'Siti Nurhaliza Wardani') {
+      updated = { ...updated, authorName: 'Wafiqi Amalia' };
+    }
+    return updated;
   });
 }
 

@@ -242,7 +242,8 @@ export const INITIAL_ARTICLES: Article[] = [
     content: `Perkembangan teknologi kecerdasan buatan dan disrupsi informasi menghadirkan dinamika baru dalam gelanggang intelektual mahasiswa. Sebagai kader PMII yang berlandaskan Paradigma Kritis Transformatif (PKT), kita tidak boleh sekadar menjadi konsumen teknologi yang pasif.\n\n### Nilai Dasar Pergerakan sebagai Kompas\n\nDalam NDP PMII, relasi Tauhid, Hablum Minallah, Hablum Minannas, dan Hablum Minal Alam memberikan peta jalan etis. Sains dan teknologi harus diarahkan untuk membebaskan manusia dari kebodohan dan ketimpangan, bukan melipatgandakan alienasi.\n\n### Komitmen Kader Ibrahimy\n\nKader di lingkungan Universitas Ibrahimy memiliki modal sosial keilmuan pesantren yang kuat. Sinergi antara tradisi kepesantrenan dan ketajaman analisis sosial modern menjadi kunci menjawab problematika keumatan dan kebangsaan.`,
     authorName: 'Ahmad Faiz Al-Ghifari',
     authorRole: 'Biro Kajian — Rayon Raden Rahmat',
-    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    // authorAvatar sengaja dikosongkan: penulis ini tidak ada di database kader,
+    // sehingga halaman preview akan otomatis menggunakan logo PK PMII UNIB
     coverImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
     tags: ['Paradigma Gerakan', 'NDP PMII', 'Teknologi'],
     status: 'published',
@@ -256,9 +257,10 @@ export const INITIAL_ARTICLES: Article[] = [
     category: 'Warta KOPRI',
     excerpt: 'KOPRI PK PMII Universitas Ibrahimy terus menggalakkan ruang dialog dan pendampingan sebaya guna memperkokoh martabat kader putri.',
     content: `Korps PMII Putri (KOPRI) PK PMII Universitas Ibrahimy secara konsisten mendorong peran aktif sahabati dalam tampuk kepemimpinan organisasi.\n\nMelalui sinergi Rayon Raden Umar Said (Tarbiyah) dan Rayon Raden Rahmat (Saintek), program peningkatan kapasitas intelektual dan advokasi terus dijalankan untuk menciptakan lingkungan pendidikan yang inklusif dan bermartabat.`,
-    authorName: 'Siti Nurhaliza Wardani',
+    authorName: 'Wafiqi Amalia',
     authorRole: 'Ketua KOPRI Rayon Raden Umar Said',
-    authorAvatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=200&q=80',
+    // Avatar menggunakan gambar cover artikel (foto Ketua KOPRI dari kegiatan MAPABA UNIB)
+    authorAvatar: 'https://images.unsplash.com/photo-1584441405886-bc91be61e56a?auto=format&fit=crop&w=200&q=80',
     coverImage: 'https://images.unsplash.com/photo-1584441405886-bc91be61e56a?auto=format&fit=crop&w=1200&q=80',
     tags: ['KOPRI', 'Pendidikan', 'Universitas Ibrahimy'],
     status: 'published',
@@ -274,6 +276,7 @@ export const INITIAL_ARTICLES: Article[] = [
     content: `Pengurus Komisariat PMII Universitas Ibrahimy sukses menggelar Rapat Kerja Tahunan dengan fokus konsolidasi dua rayon binaan. Agenda utama menitikberatkan pada standarisasi materi MAPABA serta pemanfaatan platform Computer-Based Test (CBT) untuk evaluasi pra dan pasca pelatihan.`,
     authorName: 'Biro Humas & Informasi',
     authorRole: 'Redaksi PK PMII UNIB',
+    // authorAvatar sengaja tidak diisi: komponen preview akan otomatis menggunakan logo PK PMII UNIB
     coverImage: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
     tags: ['Raker', 'Kaderisasi', 'UNIB'],
     status: 'published',

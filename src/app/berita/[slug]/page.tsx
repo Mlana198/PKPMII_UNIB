@@ -2,9 +2,75 @@
 
 import React, { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getArticleBySlug, getArticles } from '@/lib/storage';
-import { Article } from '@/lib/types';
+import { getArticleBySlug, getArticles, getCadres } from '@/lib/storage';
+import { Article, CadreProfile } from '@/lib/types';
 import { ArrowLeft, Share2 } from 'lucide-react';
+
+// Kata kunci yang mengidentifikasi penulis sebagai tim redaksi/humas, bukan kader individual
+const HUMAS_KEYWORDS = [
+  'biro humas', 'tim humas', 'redaksi', 'panitia', 'pengurus', 'komisariat',
+];
+
+function isHumasAuthor(name: string): boolean {
+  const lower = name.toLowerCase();
+  return HUMAS_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+// Logo PK PMII UNIB — digunakan untuk penulis tim/redaksi
+const LOGO_PMII = '/images/logos/komisariat.png';
+
+function AuthorAvatar({
+  article,
+  cadres,
+}: {
+  article: Article;
+  cadres: CadreProfile[];
+}) {
+  // Prioritas 1: Jika penulis adalah Humas/Redaksi → gunakan logo PK PMII UNIB
+  if (isHumasAuthor(article.authorName)) {
+    return (
+      <div className="w-10 h-10 rounded-full overflow-hidden bg-[#1B3D7B] shrink-0 flex items-center justify-center p-1.5">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={LOGO_PMII}
+          alt="PK PMII UNIB"
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
+
+  // Prioritas 2: Cari avatar penulis dari database kader (cocokkan nama)
+  const cadreMatch = cadres.find(
+    (c) => c.fullName.toLowerCase() === article.authorName.toLowerCase()
+  );
+  if (cadreMatch?.avatarUrl) {
+    return (
+      <div className="w-10 h-10 rounded-full overflow-hidden bg-[#E2E8EF] shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={cadreMatch.avatarUrl} alt={article.authorName} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
+  // Prioritas 3: Gunakan authorAvatar yang tersimpan di artikel (jika ada & bukan stok Unsplash laki-laki untuk perempuan)
+  if (article.authorAvatar) {
+    return (
+      <div className="w-10 h-10 rounded-full overflow-hidden bg-[#E2E8EF] shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={article.authorAvatar} alt={article.authorName} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
+  // Prioritas 4 (fallback): Logo PK PMII UNIB jika tidak ada foto sama sekali
+  return (
+    <div className="w-10 h-10 rounded-full overflow-hidden bg-[#1B3D7B] shrink-0 flex items-center justify-center p-1.5">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={LOGO_PMII} alt="PK PMII UNIB" className="w-full h-full object-contain" />
+    </div>
+  );
+}
 
 export default function ArticleDetailPage({
   params,
@@ -14,8 +80,10 @@ export default function ArticleDetailPage({
   const { slug } = use(params);
   const [article, setArticle] = useState<Article | null | undefined>(undefined);
   const [related, setRelated] = useState<Article[]>([]);
+  const [cadres, setCadres] = useState<CadreProfile[]>([]);
 
   useEffect(() => {
+    setCadres(getCadres());
     const found = getArticleBySlug(slug);
     if (found) {
       setArticle(found);
@@ -77,14 +145,7 @@ export default function ArticleDetailPage({
 
       {/* Author and Date Strip */}
       <div className="flex items-center gap-3.5 py-4 border-y border-[#E2E8EF] mb-8">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-[#E2E8EF] shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={article.authorAvatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200'}
-            alt={article.authorName}
-            className="w-full h-full object-cover"
-          />
-        </div>
+        <AuthorAvatar article={article} cadres={cadres} />
         <div className="flex-1">
           <p className="text-sm font-semibold text-[#1E293B]">{article.authorName}</p>
           <p className="text-xs text-[#64748B]">{article.authorRole} • {article.readTimeMinutes} menit baca</p>
