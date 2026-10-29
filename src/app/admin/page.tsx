@@ -2241,13 +2241,26 @@ export default function AdminDashboardPage() {
                   onDrop={handleCoverDrop}
                 >
                   {newCoverImage ? (
-                    <div className="relative">
+                    <div className="relative group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={newCoverImage} alt="Cover Preview" className="w-full h-36 object-cover rounded-lg" />
+                      <img
+                        src={newCoverImage}
+                        alt="Cover Preview"
+                        onClick={() => setPreviewBannerModal(newCoverImage)}
+                        className="w-full h-36 object-cover rounded-lg cursor-pointer hover:opacity-95 transition-opacity"
+                        title="Klik untuk melihat preview dalam ukuran asli"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPreviewBannerModal(newCoverImage)}
+                        className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1 backdrop-blur-xs transition-opacity"
+                      >
+                        <ZoomIn className="w-3 h-3" /> Preview Ukuran Asli
+                      </button>
                       <button type="button" onClick={removeCoverImage} className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1.5 shadow-md transition-colors" title="Hapus Foto">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent rounded-b-lg px-3 py-1.5">
+                      <div className="absolute bottom-0 left-0 bg-gradient-to-t from-black/60 to-transparent rounded-bl-lg px-3 py-1.5">
                         <p className="text-white text-[10px] font-semibold">Cover siap terbit ✓</p>
                       </div>
                     </div>
@@ -2381,9 +2394,22 @@ export default function AdminDashboardPage() {
                   onDrop={e => { e.preventDefault(); setIsDraggingEditCover(false); const f = e.dataTransfer.files?.[0]; if (f) processEditCoverFile(f); }}
                 >
                   {editCoverImage ? (
-                    <div className="relative">
+                    <div className="relative group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={editCoverImage} alt="Edit Cover" className="w-full h-32 object-cover rounded-lg" />
+                      <img
+                        src={editCoverImage}
+                        alt="Edit Cover"
+                        onClick={() => setPreviewBannerModal(editCoverImage)}
+                        className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-95 transition-opacity"
+                        title="Klik untuk melihat preview dalam ukuran asli"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPreviewBannerModal(editCoverImage)}
+                        className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1 backdrop-blur-xs transition-opacity"
+                      >
+                        <ZoomIn className="w-3 h-3" /> Preview Ukuran Asli
+                      </button>
                       <button type="button" onClick={() => { setEditCoverImage(''); if (editCoverRef.current) editCoverRef.current.value = ''; }}
                         className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-md transition-colors">
                         <Trash2 className="w-3 h-3" />

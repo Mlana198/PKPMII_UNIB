@@ -4,7 +4,7 @@ import React, { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getArticleBySlug, getArticles, getCadres } from '@/lib/storage';
 import { Article, CadreProfile } from '@/lib/types';
-import { ArrowLeft, Share2 } from 'lucide-react';
+import { ArrowLeft, Share2, ZoomIn, X } from 'lucide-react';
 
 // Kata kunci yang mengidentifikasi penulis sebagai tim redaksi/humas, bukan kader individual
 const HUMAS_KEYWORDS = [
@@ -81,6 +81,7 @@ export default function ArticleDetailPage({
   const [article, setArticle] = useState<Article | null | undefined>(undefined);
   const [related, setRelated] = useState<Article[]>([]);
   const [cadres, setCadres] = useState<CadreProfile[]>([]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     setCadres(getCadres());
@@ -152,11 +153,61 @@ export default function ArticleDetailPage({
         </div>
       </div>
 
-      {/* Featured image */}
-      <div className="rounded-lg overflow-hidden border border-[#E2E8EF] mb-8 max-h-[420px]">
+      {/* Featured image (Sebelum diklik ukuran tetap seperti saat ini max-h-[420px] object-cover) */}
+      <div
+        onClick={() => setIsPreviewOpen(true)}
+        className="relative group rounded-lg overflow-hidden border border-[#E2E8EF] mb-8 max-h-[420px] bg-slate-50 cursor-pointer shadow-xs transition-shadow hover:shadow-md"
+        title="Klik untuk melihat preview dalam ukuran asli"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={article.coverImage} alt={article.title} className="w-full h-full object-cover" />
+        <img
+          src={article.coverImage}
+          alt={article.title}
+          className="w-full h-full object-cover max-h-[420px] transition-transform duration-300 group-hover:scale-[1.01]"
+        />
+        <div className="absolute bottom-3 right-3 bg-black/70 hover:bg-black/90 text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-xs transition-opacity opacity-90 group-hover:opacity-100 shadow-sm">
+          <ZoomIn className="w-3.5 h-3.5" />
+          <span>Lihat Ukuran Asli</span>
+        </div>
       </div>
+
+      {/* Modal / Mode Preview Menyesuaikan Ukuran Asli Gambar */}
+      {isPreviewOpen && (
+        <div
+          onClick={() => setIsPreviewOpen(false)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 transition-all duration-200 animate-in fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center"
+          >
+            {/* Header Toolbar Modal Preview */}
+            <div className="w-full flex items-center justify-between pb-2.5 text-white/90 px-1">
+              <span className="text-xs font-semibold truncate max-w-xs sm:max-w-lg">
+                {article.title} — Foto Warta (Ukuran Asli)
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsPreviewOpen(false)}
+                className="bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition-colors flex items-center gap-1 text-xs px-3 shadow"
+              >
+                <X className="w-4 h-4" />
+                <span className="text-[11px] font-medium">Tutup</span>
+              </button>
+            </div>
+
+            {/* Gambar Menyesuaikan Ukuran Asli Tanpa Terpotong (object-contain) */}
+            <div className="overflow-auto max-h-[85vh] max-w-[95vw] rounded-lg border border-white/20 bg-black/50 p-1 flex items-center justify-center shadow-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={article.coverImage}
+                alt={article.title}
+                className="max-w-full max-h-[82vh] w-auto h-auto object-contain rounded"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Excerpt quote */}
       <div className="border-l-4 border-[#D4A017] pl-4 py-1 italic text-[#64748B] text-base leading-relaxed mb-8 bg-[#F8FAFC]">
