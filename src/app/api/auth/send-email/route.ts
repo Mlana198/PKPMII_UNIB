@@ -156,7 +156,8 @@ export async function POST(req: Request) {
     const smtpHost = process.env.MAIL_HOST;
     const smtpPort = Number(process.env.MAIL_PORT || 465);
     const smtpUser = process.env.MAIL_USERNAME;
-    const smtpPass = process.env.MAIL_PASSWORD;
+    const rawPass = process.env.MAIL_PASSWORD || '';
+    const smtpPass = rawPass.replace(/\s+/g, ''); // bersihkan spasi jika ada
     const mailFromAddress = process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME || 'noreply@pmii-unib.org';
     const mailFromName = process.env.MAIL_FROM_NAME || 'PK PMII UNIB';
 
