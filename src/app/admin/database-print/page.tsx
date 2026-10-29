@@ -20,6 +20,7 @@ export default function DatabasePrintPage() {
   const [kopAddress, setKopAddress] = useState('Sekretariat: Parse, Dawuhan, Ke. Situbondo, Kab. Situbondo Jawa Timur');
   const [kopPhone, setKopPhone] = useState('081336485967/081357661867');
   const [kopEmail, setKopEmail] = useState('komisariatunib@gmail.com');
+  const [kopWebsite, setKopWebsite] = useState('http://pmii-unib.or.id');
   const [kopCode, setKopCode] = useState('V-04');
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export default function DatabasePrintPage() {
           if (parsed.address) setKopAddress(parsed.address);
           if (parsed.phone) setKopPhone(parsed.phone);
           if (parsed.email) setKopEmail(parsed.email);
+          if (parsed.website) setKopWebsite(parsed.website);
           if (parsed.code) setKopCode(parsed.code);
         } catch {
           // ignore
@@ -49,6 +51,7 @@ export default function DatabasePrintPage() {
         address: kopAddress,
         phone: kopPhone,
         email: kopEmail,
+        website: kopWebsite,
         code: kopCode,
       }));
     }
@@ -159,6 +162,26 @@ export default function DatabasePrintPage() {
                 placeholder="komisariatunib@gmail.com"
               />
             </div>
+            <div className="sm:col-span-2">
+              <label className="block text-[11px] font-semibold text-[#64748B] mb-1">Website Resmi</label>
+              <input
+                type="text"
+                value={kopWebsite}
+                onChange={(e) => setKopWebsite(e.target.value)}
+                className="w-full border border-[#CBD5E1] rounded px-3 py-1.5 text-xs text-[#1E293B]"
+                placeholder="http://pmii-unib.or.id"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-[#64748B] mb-1">Kode Wilayah / Komisariat</label>
+              <input
+                type="text"
+                value={kopCode}
+                onChange={(e) => setKopCode(e.target.value)}
+                className="w-full border border-[#CBD5E1] rounded px-3 py-1.5 text-xs text-[#1E293B]"
+                placeholder="V-04"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -181,50 +204,110 @@ export default function DatabasePrintPage() {
           fontSize: '11pt',
         }}
       >
-        {/* KOP SURAT RESMI SESUAI STANDAR PMII */}
-        <div className="relative pb-2 mb-4">
+        {/* KOP SURAT RESMI SESUAI STANDAR PEDOMAN ADMINISTRASI PMII */}
+        <div className="relative pb-1 mb-4">
           <div className="flex items-center justify-between">
-            {/* Logo Resmi PMII & Kode Wilayah V-04 */}
-            <div className="flex flex-col items-center justify-center shrink-0 w-24">
+            {/* Logo Resmi PMII & Kode Wilayah V-04 (Sebelah Kiri) */}
+            <div className="flex flex-col items-center justify-center shrink-0 w-28">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/logos/pmii-official.png"
                 alt="Logo Resmi PMII"
-                className="w-16 h-auto max-h-20 object-contain"
+                className="w-20 h-auto max-h-24 object-contain"
               />
-              <span className="font-bold text-[11pt] text-black tracking-wider mt-1">
+              <span 
+                className="font-bold text-black tracking-wider mt-1"
+                style={{ fontFamily: "'Arial Narrow', sans-serif", fontSize: '11pt' }}
+              >
                 {kopCode}
               </span>
             </div>
 
-            {/* Tulisan Kop Surat */}
-            <div className="flex-1 text-center px-2">
-              <h2 className="text-[14pt] font-bold text-blue-600 uppercase tracking-wide leading-tight">
+            {/* Tulisan Kop Surat Sesuai Pedoman: Arial Narrow 14pt Bold Biru, Monotype Corsiva 11pt, Arial Narrow 11pt */}
+            <div 
+              className="flex-1 text-center px-2"
+              style={{
+                color: '#0047AB',
+                lineHeight: 1.0,
+              }}
+            >
+              {/* Baris 1: Tingkat Kepengurusan (Arial Narrow Bold 14pt Biru) */}
+              <h2 
+                className="font-bold uppercase tracking-wide"
+                style={{ fontFamily: "'Arial Narrow', Arial, sans-serif", fontSize: '14pt', margin: '0 0 2px 0', lineHeight: 1.0 }}
+              >
                 PENGURUS KOMISARIAT
               </h2>
-              <h1 className="text-[17pt] font-black text-blue-600 uppercase tracking-wide leading-tight">
+
+              {/* Baris 2: Nama Organisasi (Arial Narrow Bold 14pt Biru) */}
+              <h1 
+                className="font-bold uppercase tracking-wide"
+                style={{ fontFamily: "'Arial Narrow', Arial, sans-serif", fontSize: '14pt', margin: '0 0 2px 0', lineHeight: 1.0 }}
+              >
                 PERGERAKAN MAHASISWA ISLAM INDONESIA
               </h1>
-              <p className="text-[10pt] italic text-blue-600 font-semibold leading-tight">
-                (Indonesian Moslem Student Movement)
+
+              {/* Baris 3: Bahasa Inggris Semua Tingkat Kepengurusan (Monotype Corsiva 11pt Biru) */}
+              <p 
+                style={{
+                  fontFamily: "'Monotype Corsiva', 'Apple Chancery', cursive, serif",
+                  fontSize: '11pt',
+                  fontStyle: 'italic',
+                  margin: '1px 0 2px 0',
+                  lineHeight: 1.0,
+                }}
+              >
+                (Commissariat Board of Indonesian Moslem Student Movement)
               </p>
-              <h3 className="text-[14pt] font-bold text-blue-600 uppercase tracking-wide leading-tight mt-0.5">
+
+              {/* Baris 4: Lembaga / Kampus (Arial Narrow Bold 14pt Biru) */}
+              <h3 
+                className="font-bold uppercase tracking-wide"
+                style={{ fontFamily: "'Arial Narrow', Arial, sans-serif", fontSize: '14pt', margin: '2px 0 3px 0', lineHeight: 1.0 }}
+              >
                 UNIVERSITAS IBRAHIMY SITUBONDO
               </h3>
-              <p className="text-[10pt] text-blue-600 leading-snug mt-1">
+
+              {/* Baris 5: Alamat (Arial Narrow 11pt Biru, Spasi 1.0) */}
+              <p 
+                style={{
+                  fontFamily: "'Arial Narrow', Arial, sans-serif",
+                  fontSize: '11pt',
+                  margin: '1px 0',
+                  lineHeight: 1.1,
+                }}
+              >
                 {kopAddress}
               </p>
-              <p className="text-[10pt] text-blue-600 leading-snug">
-                Telp: {kopPhone} Email: <span className="underline">{kopEmail}</span>
+
+              {/* Baris 6: CP, Email, Website (Arial Narrow 11pt Biru, Spasi 1.0) */}
+              <p 
+                style={{
+                  fontFamily: "'Arial Narrow', Arial, sans-serif",
+                  fontSize: '11pt',
+                  margin: '1px 0',
+                  lineHeight: 1.1,
+                }}
+              >
+                Telp: {kopPhone} &nbsp;|&nbsp; Email: <span className="underline">{kopEmail}</span>
+                {kopWebsite && <span> &nbsp;|&nbsp; Website: {kopWebsite}</span>}
               </p>
             </div>
 
-            {/* Placeholder spacer simetris */}
-            <div className="w-24 shrink-0 hidden sm:block"></div>
+            {/* Spacer simetris sebelah kanan */}
+            <div className="w-28 shrink-0 hidden sm:block"></div>
           </div>
 
-          {/* Garis Tunggal Pembatas (Tidak Double) */}
-          <div className="mt-2.5 border-t-2 border-blue-600"></div>
+          {/* 
+            Garis Pembatas Sesuai Aturan Pedoman Administrasi PMII:
+            (5) Garis atas ukuran 1 1/2 pt (1.5pt) berwarna biru
+            (6) Garis bawah ukuran 2 1/4 pt (2.25pt) berwarna abu-abu
+          */}
+          <div className="mt-3">
+            <div style={{ borderTop: '1.5pt solid #0047AB' }}></div>
+            <div style={{ height: '2pt' }}></div>
+            <div style={{ borderTop: '2.25pt solid #808080' }}></div>
+          </div>
         </div>
 
         {/* JUDUL DOKUMEN */}
