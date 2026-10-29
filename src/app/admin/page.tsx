@@ -351,6 +351,8 @@ export default function AdminDashboardPage() {
   const [editEvIsOpen, setEditEvIsOpen] = useState(true);
   const [editEvCP, setEditEvCP] = useState('');
   const [editEvCPPhone, setEditEvCPPhone] = useState('');
+  const [editEvBannerPreview, setEditEvBannerPreview] = useState('');
+  const editEvBannerRef = useRef<HTMLInputElement>(null);
 
   // Edit Quiz State
   const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
@@ -383,6 +385,22 @@ export default function AdminDashboardPage() {
   const [evQuota, setEvQuota] = useState(30);
   const [evCP, setEvCP] = useState('');
   const [evCPPhone, setEvCPPhone] = useState('');
+  const [evBannerPreview, setEvBannerPreview] = useState('');
+  const evBannerRef = useRef<HTMLInputElement>(null);
+
+  const processEventBanner = (file: File, setter: (v: string) => void) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Format file harus berupa gambar (JPG, PNG, atau WEBP).');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ukuran banner maksimal 2 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setter(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   // Form tambah quiz
   const [qzTitle, setQzTitle] = useState('');
@@ -500,7 +518,7 @@ export default function AdminDashboardPage() {
       endDate: evEnd || evStart,
       registrationDeadline: evDeadline || evStart,
       maxQuota: evQuota,
-      bannerUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
+      bannerUrl: evBannerPreview || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
       isOpen: true,
       requirements: ['Mahasiswa aktif Universitas Ibrahimy', 'Mengisi formulir pendaftaran', 'Bersedia mengikuti seluruh rangkaian acara'],
       contactPerson: { name: evCP || 'Panitia', phone: evCPPhone || '-' },
@@ -509,6 +527,8 @@ export default function AdminDashboardPage() {
     });
     setEvents([created, ...events]);
     setEvTitle(''); setEvTheme(''); setEvLocation(''); setEvStart(''); setEvEnd(''); setEvDeadline(''); setEvCP(''); setEvCPPhone(''); setEvQuota(30);
+    setEvBannerPreview('');
+    if (evBannerRef.current) evBannerRef.current.value = '';
     alert(`Pelatihan "${created.title}" berhasil ditambahkan!`);
   };
 
@@ -602,6 +622,8 @@ export default function AdminDashboardPage() {
     setEditEvIsOpen(ev.isOpen);
     setEditEvCP(ev.contactPerson.name);
     setEditEvCPPhone(ev.contactPerson.phone);
+    setEditEvBannerPreview(ev.bannerUrl || '');
+    if (editEvBannerRef.current) editEvBannerRef.current.value = '';
   };
 
   const handleSaveEditEvent = (e: React.FormEvent) => {
@@ -619,6 +641,7 @@ export default function AdminDashboardPage() {
       maxQuota: editEvQuota,
       isOpen: editEvIsOpen,
       contactPerson: { name: editEvCP || 'Panitia', phone: editEvCPPhone || '-' },
+      bannerUrl: editEvBannerPreview || undefined,
     });
     if (updated) {
       setEvents(prev => prev.map(ev => ev.id === editingEventId ? { ...ev, ...updated } : ev));
@@ -1347,6 +1370,36 @@ export default function AdminDashboardPage() {
                   <input type="text" value={evCPPhone} onChange={e => setEvCPPhone(e.target.value)} placeholder="08xx..." className={inputClass} />
                 </div>
               </div>
+              {/* Upload Banner */}
+              <div>
+                <label className={labelClass}>Banner Pelatihan</label>
+                {evBannerPreview ? (
+                  <div className="relative mb-2">
+                    <img src={evBannerPreview} alt="Preview banner" className="w-full h-32 object-cover rounded-lg border border-[#E2E8EF]" />
+                    <button
+                      type="button"
+                      onClick={() => { setEvBannerPreview(''); if (evBannerRef.current) evBannerRef.current.value = ''; }}
+                      className="absolute top-1.5 right-1.5 bg-white/90 hover:bg-white text-red-500 rounded-full p-0.5 shadow"
+                      title="Hapus banner"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : null}
+                <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-[#CBD5E1] rounded-lg py-4 px-3 cursor-pointer hover:border-[#1B3D7B] hover:bg-blue-50/30 transition-colors">
+                  <Upload className="w-5 h-5 text-[#94A3B8] mb-1" />
+                  <span className="text-[11px] text-[#64748B] font-medium">{evBannerPreview ? 'Ganti banner' : 'Upload banner pelatihan'}</span>
+                  <span className="text-[10px] text-[#94A3B8] mt-0.5">JPG / PNG / WEBP, maks 2 MB</span>
+                  <input
+                    ref={evBannerRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) processEventBanner(f, setEvBannerPreview); }}
+                  />
+                </label>
+                <p className="text-[10px] text-[#94A3B8] mt-1">Jika kosong, akan menggunakan gambar default.</p>
+              </div>
               <button type="submit" className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white text-xs font-semibold py-2.5 rounded transition-colors flex items-center justify-center gap-2">
                 <Plus className="w-4 h-4" /> Simpan Agenda Pelatihan
               </button>
@@ -1360,6 +1413,9 @@ export default function AdminDashboardPage() {
               <p className="text-xs text-[#94A3B8] text-center py-8">Belum ada agenda pelatihan.</p>
             ) : events.map(ev => (
               <div key={ev.id} className="bg-white border border-[#E2E8EF] rounded-lg p-4 shadow-sm">
+                {ev.bannerUrl && (
+                  <img src={ev.bannerUrl} alt={ev.title} className="w-full h-20 object-cover rounded-md mb-3 border border-[#E2E8EF]" />
+                )}
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <span className="text-[10px] font-bold text-[#1B3D7B] bg-blue-50 px-2 py-0.5 rounded">{ev.eventType}</span>
@@ -1470,6 +1526,35 @@ export default function AdminDashboardPage() {
                   <label className={labelClass}>No. HP Contact Person</label>
                   <input type="text" value={editEvCPPhone} onChange={e => setEditEvCPPhone(e.target.value)} className={inputClass} />
                 </div>
+              </div>
+              {/* Upload Banner Edit */}
+              <div>
+                <label className={labelClass}>Banner Pelatihan</label>
+                {editEvBannerPreview ? (
+                  <div className="relative mb-2">
+                    <img src={editEvBannerPreview} alt="Preview banner" className="w-full h-28 object-cover rounded-lg border border-[#E2E8EF]" />
+                    <button
+                      type="button"
+                      onClick={() => { setEditEvBannerPreview(''); if (editEvBannerRef.current) editEvBannerRef.current.value = ''; }}
+                      className="absolute top-1.5 right-1.5 bg-white/90 hover:bg-white text-red-500 rounded-full p-0.5 shadow"
+                      title="Hapus banner"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : null}
+                <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-[#CBD5E1] rounded-lg py-3 px-3 cursor-pointer hover:border-[#1B3D7B] hover:bg-blue-50/30 transition-colors">
+                  <Upload className="w-4 h-4 text-[#94A3B8] mb-1" />
+                  <span className="text-[11px] text-[#64748B] font-medium">{editEvBannerPreview ? 'Ganti banner' : 'Upload banner baru'}</span>
+                  <span className="text-[10px] text-[#94A3B8]">JPG / PNG / WEBP, maks 2 MB</span>
+                  <input
+                    ref={editEvBannerRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) processEventBanner(f, setEditEvBannerPreview); }}
+                  />
+                </label>
               </div>
               <div className="flex gap-2 pt-2">
                 <button type="submit" className="flex-1 bg-[#1B3D7B] hover:bg-[#122852] text-white text-xs font-semibold py-2.5 rounded transition-colors">
