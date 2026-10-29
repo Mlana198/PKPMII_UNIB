@@ -403,22 +403,22 @@ export default function DatabasePrintPage() {
           </table>
         </div>
 
-        {/* Tanda Tangan Pengurus Pengesah (Kaki Dokumen Resmi) */}
+        {/* Tanda Tangan Pengurus Pengesah (Kaki Dokumen Resmi Sesuai Format Administrasi) */}
         <div className="mt-8 pt-4 flex justify-between items-end text-[11pt] text-black print:break-inside-avoid">
+          {/* Kolom Kiri: Mengetahui */}
           <div className="text-center w-64">
             <p>Mengetahui,</p>
-            <p className="font-bold">Ketua Mandataris PK PMII UNIB</p>
-            <div className="h-16"></div>
+            <div className="h-20"></div>
             <p className="font-bold underline uppercase">{leadership.ketua}</p>
-            <p className="text-[10px]">KTA: PMII-UNIB/2021/RR/0001</p>
+            <p className="font-bold">Ketua Komisariat</p>
           </div>
 
+          {/* Kolom Kanan: Tempat, Tanggal & Sekretaris */}
           <div className="text-center w-64">
             <p>Situbondo, 10 Oktober 2026</p>
-            <p className="font-bold">Sekretaris Komisariat</p>
-            <div className="h-16"></div>
+            <div className="h-20"></div>
             <p className="font-bold underline uppercase">{leadership.sekretaris}</p>
-            <p className="text-[10px]">KTA: PMII-UNIB/2023/RUS/0031</p>
+            <p className="font-bold">Sekretaris Komisariat</p>
           </div>
         </div>
       </div>
