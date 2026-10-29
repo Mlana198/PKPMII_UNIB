@@ -405,6 +405,26 @@ export function updateRegistrationStatus(id: string, status: 'pending' | 'approv
   return updated;
 }
 
+export function recordAttendance(ticketCode: string): { success: boolean; message: string; registration?: EventRegistration } {
+  const registrations = getRegistrations();
+  const idx = registrations.findIndex(r => r.qrTicketCode === ticketCode || r.id === ticketCode);
+  if (idx === -1) {
+    return { success: false, message: 'Tiket presensi tidak ditemukan!' };
+  }
+  const reg = registrations[idx];
+  if (reg.attendanceStatus === 'hadir') {
+    return { success: true, message: `Peserta ${reg.fullName} sudah presensi sebelumnya pada ${reg.attendedAt ? new Date(reg.attendedAt).toLocaleTimeString('id-ID') : ''}.`, registration: reg };
+  }
+  const updatedReg: EventRegistration = {
+    ...reg,
+    attendanceStatus: 'hadir',
+    attendedAt: new Date().toISOString(),
+  };
+  registrations[idx] = updatedReg;
+  setItem(STORAGE_KEYS.REGISTRATIONS, registrations);
+  return { success: true, message: `Presensi berhasil dicatat untuk ${reg.fullName}!`, registration: updatedReg };
+}
+
 // Quizzes
 export function getQuizzes(): Quiz[] {
   return getItem<Quiz[]>(STORAGE_KEYS.QUIZZES, INITIAL_QUIZZES);

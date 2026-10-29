@@ -91,6 +91,7 @@ export interface TrainingEvent {
   bannerUrl: string;
   isOpen: boolean;
   requirements: string[];
+  whatsappGroupUrl?: string;
   contactPerson: {
     name: string;
     phone: string;
@@ -113,11 +114,14 @@ export interface EventRegistration {
   phoneNumber: string;
   email: string;
   motivation: string;
+  requirementFileUrl?: string;
+  requirementFileName?: string;
   status: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
   registeredAt: string;
   qrTicketCode: string;
   attendanceStatus?: 'hadir' | 'tidak hadir';
+  attendedAt?: string;
   preTestScore?: number;
   postTestScore?: number;
   isPassed?: boolean;

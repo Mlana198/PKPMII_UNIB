@@ -1,16 +1,51 @@
-import React from 'react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { getEventBySlug } from '@/lib/storage';
-import { ArrowLeft, MapPin, Users, Calendar, Phone, CheckCircle2, ArrowRight } from 'lucide-react';
+'use client';
 
-export default async function EventDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const event = getEventBySlug(slug);
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { notFound, useParams } from 'next/navigation';
+import { getEventBySlug, getEvents } from '@/lib/storage';
+import { ArrowLeft, MapPin, Users, Phone, CheckCircle2, ArrowRight } from 'lucide-react';
+import { TrainingEvent } from '@/lib/types';
+
+export default function EventDetailPage() {
+  const params = useParams();
+  const slug = params?.slug as string;
+  const [event, setEvent] = useState<TrainingEvent | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = () => {
+    if (!slug) return;
+    const found = getEventBySlug(slug);
+    if (found) {
+      setEvent(found);
+    } else {
+      const all = getEvents();
+      const bySlug = all.find(e => e.slug === slug);
+      if (bySlug) setEvent(bySlug);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+
+    const handleStorage = () => loadData();
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('pmii-storage-updated', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('pmii-storage-updated', handleStorage);
+    };
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-[#64748B] text-xs">
+        Memuat detail pelatihan...
+      </div>
+    );
+  }
+
   if (!event) notFound();
 
   return (
@@ -22,9 +57,9 @@ export default async function EventDetailPage({
         <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Jadwal Pelatihan
       </Link>
 
-      <div className="rounded-lg overflow-hidden border border-[#E2E8EF] mb-8 max-h-[380px]">
+      <div className="rounded-lg overflow-hidden border border-[#E2E8EF] mb-8 max-h-[380px] bg-slate-50">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={event.bannerUrl} alt={event.title} className="w-full h-full object-cover" />
+        <img src={event.bannerUrl} alt={event.title} className="w-full h-full object-cover max-h-[380px]" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -44,21 +79,25 @@ export default async function EventDetailPage({
             <h2 className="text-xs font-bold text-[#1B3D7B] uppercase tracking-wider mb-2">
               Deskripsi Acara
             </h2>
-            <p className="text-sm text-[#334155] leading-relaxed">{event.description}</p>
+            <p className="text-sm text-[#334155] leading-relaxed whitespace-pre-line">{event.description}</p>
           </div>
 
           <div>
             <h2 className="text-xs font-bold text-[#1B3D7B] uppercase tracking-wider mb-3">
               Persyaratan Pendaftaran
             </h2>
-            <ul className="space-y-2.5">
-              {event.requirements.map((req, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-xs text-[#334155]">
-                  <CheckCircle2 className="w-4 h-4 text-[#D4A017] shrink-0 mt-0.5" />
-                  <span>{req}</span>
-                </li>
-              ))}
-            </ul>
+            {event.requirements && event.requirements.length > 0 ? (
+              <ul className="space-y-2.5">
+                {event.requirements.map((req, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-xs text-[#334155]">
+                    <CheckCircle2 className="w-4 h-4 text-[#D4A017] shrink-0 mt-0.5" />
+                    <span>{req}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-[#64748B] italic">Tidak ada persyaratan khusus.</p>
+            )}
           </div>
 
           {event.hasPreTest && event.preTestId && (
@@ -68,7 +107,7 @@ export default async function EventDetailPage({
                   Evaluasi Pembelajaran
                 </span>
                 <p className="text-sm font-semibold text-[#1E293B] mt-0.5">
-                  Ujian Pre-Test & Post-Test CBT Wajib
+                  Ujian Pre-Test &amp; Post-Test CBT Wajib
                 </p>
                 <p className="text-xs text-[#64748B]">Kerjakan ujian sebelum pembukaan kegiatan resmi.</p>
               </div>
@@ -112,8 +151,8 @@ export default async function EventDetailPage({
                 <Phone className="w-4 h-4 text-[#D4A017] shrink-0 mt-0.5" />
                 <div>
                   <div className="font-semibold text-[#1E293B]">Narahubung Panitia</div>
-                  <div className="text-[#64748B] mt-0.5">{event.contactPerson.name}</div>
-                  <div className="text-[#1B3D7B] font-mono mt-0.5">{event.contactPerson.phone}</div>
+                  <div className="text-[#64748B] mt-0.5">{event.contactPerson?.name || 'Panitia'}</div>
+                  <div className="text-[#1B3D7B] font-mono mt-0.5">{event.contactPerson?.phone || '-'}</div>
                 </div>
               </div>
             </div>

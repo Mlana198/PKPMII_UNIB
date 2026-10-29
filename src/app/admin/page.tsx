@@ -365,6 +365,8 @@ export default function AdminDashboardPage() {
   const [editEvIsOpen, setEditEvIsOpen] = useState(true);
   const [editEvCP, setEditEvCP] = useState('');
   const [editEvCPPhone, setEditEvCPPhone] = useState('');
+  const [editEvRequirements, setEditEvRequirements] = useState('');
+  const [editEvWhatsappGroup, setEditEvWhatsappGroup] = useState('');
   const [editEvBannerPreview, setEditEvBannerPreview] = useState('');
   const editEvBannerRef = useRef<HTMLInputElement>(null);
 
@@ -400,6 +402,8 @@ export default function AdminDashboardPage() {
   const [evQuota, setEvQuota] = useState(30);
   const [evCP, setEvCP] = useState('');
   const [evCPPhone, setEvCPPhone] = useState('');
+  const [evRequirements, setEvRequirements] = useState("Mahasiswa aktif\nMengisi formulir pendaftaran\nBersedia mengikuti seluruh rangkaian acara");
+  const [evWhatsappGroup, setEvWhatsappGroup] = useState('');
   const [evBannerPreview, setEvBannerPreview] = useState('');
   const evBannerRef = useRef<HTMLInputElement>(null);
 
@@ -524,6 +528,11 @@ export default function AdminDashboardPage() {
     if (!evTitle.trim() || !evStart) return;
     const finalEventType = evType === 'Lainnya' ? (evCustomType.trim() || 'Lainnya') : evType;
     const slug = evTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const parsedReqs = evRequirements
+      .split('\n')
+      .map(r => r.trim())
+      .filter(r => r.length > 0);
+
     const created = saveEvent({
       title: evTitle,
       slug,
@@ -537,13 +546,16 @@ export default function AdminDashboardPage() {
       maxQuota: evQuota,
       bannerUrl: evBannerPreview || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
       isOpen: true,
-      requirements: ['Mahasiswa aktif Universitas Ibrahimy', 'Mengisi formulir pendaftaran', 'Bersedia mengikuti seluruh rangkaian acara'],
+      requirements: parsedReqs.length > 0 ? parsedReqs : ['Mahasiswa aktif', 'Mengisi formulir pendaftaran'],
+      whatsappGroupUrl: evWhatsappGroup.trim() || undefined,
       contactPerson: { name: evCP || 'Panitia', phone: evCPPhone || '-' },
       hasPreTest: false,
       hasPostTest: false,
     });
     setEvents([created, ...events]);
     setEvTitle(''); setEvTheme(''); setEvLocation(''); setEvStart(''); setEvEnd(''); setEvDeadline(''); setEvCP(''); setEvCPPhone(''); setEvQuota(30);
+    setEvRequirements("Mahasiswa aktif\nMengisi formulir pendaftaran\nBersedia mengikuti seluruh rangkaian acara");
+    setEvWhatsappGroup('');
     setEvType('MAPABA');
     setEvCustomType('');
     setEvBannerPreview('');
@@ -649,6 +661,8 @@ export default function AdminDashboardPage() {
     setEditEvIsOpen(ev.isOpen);
     setEditEvCP(ev.contactPerson.name);
     setEditEvCPPhone(ev.contactPerson.phone);
+    setEditEvRequirements((ev.requirements || []).join('\n'));
+    setEditEvWhatsappGroup(ev.whatsappGroupUrl || '');
     setEditEvBannerPreview(ev.bannerUrl || '');
     if (editEvBannerRef.current) editEvBannerRef.current.value = '';
   };
@@ -657,6 +671,11 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     if (!editingEventId || !editEvTitle.trim()) return;
     const finalEventType = editEvType === 'Lainnya' ? (editEvCustomType.trim() || 'Lainnya') : editEvType;
+    const parsedReqs = editEvRequirements
+      .split('\n')
+      .map(r => r.trim())
+      .filter(r => r.length > 0);
+
     const updated = updateEvent(editingEventId, {
       title: editEvTitle,
       eventType: finalEventType,
@@ -668,6 +687,8 @@ export default function AdminDashboardPage() {
       registrationDeadline: editEvDeadline || editEvStart,
       maxQuota: editEvQuota,
       isOpen: editEvIsOpen,
+      requirements: parsedReqs,
+      whatsappGroupUrl: editEvWhatsappGroup.trim() || undefined,
       contactPerson: { name: editEvCP || 'Panitia', phone: editEvCPPhone || '-' },
       bannerUrl: editEvBannerPreview || undefined,
     });
@@ -1410,30 +1431,63 @@ export default function AdminDashboardPage() {
               <tr className="bg-[#F8FAFC] border-b border-[#E2E8EF]">
                 <th className={thClass}>Peserta</th>
                 <th className={`${thClass} hidden md:table-cell`}>Kegiatan</th>
-                <th className={thClass}>Status Skrining</th>
+                <th className={thClass}>File Persyaratan</th>
+                <th className={thClass}>Status &amp; Presensi</th>
                 <th className={`${thClass} text-right`}>Tindakan</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8EF]">
               {registrations.length === 0 ? (
-                <tr><td colSpan={4} className="text-center py-16 text-[#64748B] text-xs">Belum ada pendaftar pelatihan.</td></tr>
+                <tr><td colSpan={5} className="text-center py-16 text-[#64748B] text-xs">Belum ada pendaftar pelatihan.</td></tr>
               ) : registrations.map((r) => (
                 <tr key={r.id} className="hover:bg-[#F8FAFC] transition-colors">
                   <td className={tdClass}>
                     <div className="font-semibold text-sm">{r.fullName}</div>
                     <div className="text-[11px] text-[#64748B] font-mono">{r.nim} • {r.rayon}</div>
+                    <div className="text-[10px] text-[#94A3B8] mt-0.5">Kode: {r.qrTicketCode}</div>
                   </td>
-                  <td className={`${tdClass} hidden md:table-cell text-[#64748B]`}>{r.eventTitle}</td>
+                  <td className={`${tdClass} hidden md:table-cell text-[#64748B]`}>
+                    <div className="font-medium text-[#1E293B]">{r.eventTitle}</div>
+                    <div className="text-[11px] text-[#94A3B8]">{r.phoneNumber}</div>
+                  </td>
                   <td className={tdClass}>
-                    <span className={`text-[11px] px-2 py-0.5 rounded font-semibold ${
-                      r.status === 'approved'
-                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                        : r.status === 'rejected'
-                        ? 'bg-red-50 text-red-700 border border-red-200'
-                        : 'bg-amber-50 text-amber-700 border border-amber-200'
-                    }`}>
-                      {r.status === 'approved' ? 'Lolos Skrining' : r.status === 'rejected' ? 'Ditolak' : 'Menunggu Review'}
-                    </span>
+                    {r.requirementFileUrl ? (
+                      <a
+                        href={r.requirementFileUrl}
+                        download={r.requirementFileName || 'persyaratan.pdf'}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] text-[#1B3D7B] bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded font-medium"
+                      >
+                        <Download className="w-3 h-3" /> Unduh Berkas
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-[#94A3B8] italic">Tidak ada berkas</span>
+                    )}
+                  </td>
+                  <td className={tdClass}>
+                    <div className="space-y-1">
+                      <div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
+                          r.status === 'approved'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            : r.status === 'rejected'
+                            ? 'bg-red-50 text-red-700 border border-red-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                          {r.status === 'approved' ? 'Lolos Skrining' : r.status === 'rejected' ? 'Ditolak' : 'Menunggu Review'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${
+                          r.attendanceStatus === 'hadir'
+                            ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                            : 'bg-slate-100 text-[#64748B]'
+                        }`}>
+                          {r.attendanceStatus === 'hadir' ? '✓ Sudah Hadir Presensi' : 'Belum Presensi'}
+                        </span>
+                      </div>
+                    </div>
                   </td>
                   <td className={`${tdClass} text-right`}>
                     <div className="flex items-center justify-end gap-2">
@@ -1527,6 +1581,29 @@ export default function AdminDashboardPage() {
                   <label className={labelClass}>No. HP Contact Person</label>
                   <input type="text" value={evCPPhone} onChange={e => setEvCPPhone(e.target.value)} placeholder="08xx..." className={inputClass} />
                 </div>
+              </div>
+              {/* Input Link WhatsApp Group */}
+              <div>
+                <label className={labelClass}>Link Grup WhatsApp Peserta (E-Tiket)</label>
+                <input
+                  type="url"
+                  value={evWhatsappGroup}
+                  onChange={e => setEvWhatsappGroup(e.target.value)}
+                  placeholder="https://chat.whatsapp.com/..."
+                  className={inputClass}
+                />
+                <p className="text-[10px] text-[#94A3B8] mt-1">Tombol Gabung Grup Peserta di E-Tiket Presensi akan otomatis membuka link ini.</p>
+              </div>
+              {/* Input Persyaratan Pelatihan */}
+              <div>
+                <label className={labelClass}>Persyaratan Pelatihan (1 baris per syarat)</label>
+                <textarea
+                  rows={3}
+                  value={evRequirements}
+                  onChange={e => setEvRequirements(e.target.value)}
+                  placeholder="Masukkan persyaratan pendaftaran, satu per baris"
+                  className={inputClass}
+                />
               </div>
               {/* Upload Banner */}
               <div>
@@ -1698,6 +1775,29 @@ export default function AdminDashboardPage() {
                   <label className={labelClass}>No. HP Contact Person</label>
                   <input type="text" value={editEvCPPhone} onChange={e => setEditEvCPPhone(e.target.value)} className={inputClass} />
                 </div>
+              </div>
+              {/* Input Link WhatsApp Group */}
+              <div>
+                <label className={labelClass}>Link Grup WhatsApp Peserta (E-Tiket)</label>
+                <input
+                  type="url"
+                  value={editEvWhatsappGroup}
+                  onChange={e => setEditEvWhatsappGroup(e.target.value)}
+                  placeholder="https://chat.whatsapp.com/..."
+                  className={inputClass}
+                />
+                <p className="text-[10px] text-[#94A3B8] mt-1">Peserta yang membuka e-tiket akan diarahkan ke grup ini saat klik tombol &ldquo;Gabung Grup Peserta&rdquo;.</p>
+              </div>
+              {/* Input Persyaratan Pelatihan */}
+              <div>
+                <label className={labelClass}>Persyaratan Pelatihan (1 baris per syarat)</label>
+                <textarea
+                  rows={3}
+                  value={editEvRequirements}
+                  onChange={e => setEditEvRequirements(e.target.value)}
+                  placeholder="Masukkan persyaratan, satu per baris"
+                  className={inputClass}
+                />
               </div>
               {/* Upload Banner Edit */}
               <div>

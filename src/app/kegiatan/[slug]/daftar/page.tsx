@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
 import { getEventBySlug, saveRegistration, getRayons } from '@/lib/storage';
-import { ArrowLeft, Lock, LogIn, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Lock, LogIn, CheckCircle, Upload, FileText, X } from 'lucide-react';
 
 export default function EventRegisterPage({
   params,
@@ -29,6 +29,26 @@ export default function EventRegisterPage({
     motivation: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [requirementFileUrl, setRequirementFileUrl] = useState('');
+  const [requirementFileName, setRequirementFileName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ukuran berkas persyaratan maksimal 2 MB.');
+      return;
+    }
+
+    setRequirementFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setRequirementFileUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Auto-fill profil kader yang login
   useEffect(() => {
@@ -114,6 +134,8 @@ export default function EventRegisterPage({
         eventId: event.id,
         eventTitle: event.title,
         ...form,
+        requirementFileUrl: requirementFileUrl || undefined,
+        requirementFileName: requirementFileName || undefined,
       });
       router.push(`/kegiatan/tiket/${reg.id}`);
     } catch {
@@ -247,6 +269,63 @@ export default function EventRegisterPage({
             className={inputClass}
           />
         </Field>
+
+        {/* Upload Berkas Persyaratan */}
+        <div>
+          <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1.5">
+            Unggah Berkas Persyaratan (PDF / Gambar)
+          </label>
+          <div className="border-2 border-dashed border-[#CBD5E1] rounded-lg p-4 text-center hover:border-[#1B3D7B] hover:bg-blue-50/20 transition-colors">
+            {requirementFileName ? (
+              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded px-3 py-2 text-xs">
+                <div className="flex items-center gap-2 text-[#1B3D7B] truncate">
+                  <FileText className="w-4 h-4 shrink-0 text-[#1B3D7B]" />
+                  <span className="font-medium truncate">{requirementFileName}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRequirementFileName('');
+                    setRequirementFileUrl('');
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  className="text-red-500 hover:text-red-700 p-1 shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="cursor-pointer block">
+                <Upload className="w-6 h-6 text-[#94A3B8] mx-auto mb-1.5" />
+                <span className="text-xs font-semibold text-[#1B3D7B] hover:underline">
+                  Klik untuk unggah berkas persyaratan
+                </span>
+                <p className="text-[10px] text-[#94A3B8] mt-0.5">
+                  Format PDF, JPG, atau PNG (Maksimal 2 MB)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+          {event.requirements && event.requirements.length > 0 && (
+            <div className="mt-2 bg-[#F8FAFC] border border-[#E2E8EF] rounded p-2.5">
+              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-1">
+                Persyaratan yang diperlukan:
+              </p>
+              <ul className="text-[11px] text-[#475569] list-disc list-inside space-y-0.5">
+                {event.requirements.map((req, idx) => (
+                  <li key={idx}>{req}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
 
         <button
           type="submit"
