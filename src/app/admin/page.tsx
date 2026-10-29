@@ -341,7 +341,8 @@ export default function AdminDashboardPage() {
   // Edit Pelatihan State
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editEvTitle, setEditEvTitle] = useState('');
-  const [editEvType, setEditEvType] = useState<'MAPABA' | 'PKD' | 'Sekolah Pemikiran' | 'Sekolah Advokasi' | 'Pelatihan Jurnalistik' | 'Webinar'>('MAPABA');
+  const [editEvType, setEditEvType] = useState<string>('MAPABA');
+  const [editEvCustomType, setEditEvCustomType] = useState('');
   const [editEvTheme, setEditEvTheme] = useState('');
   const [editEvLocation, setEditEvLocation] = useState('');
   const [editEvStart, setEditEvStart] = useState('');
@@ -376,7 +377,8 @@ export default function AdminDashboardPage() {
 
   // Form tambah pelatihan
   const [evTitle, setEvTitle] = useState('');
-  const [evType, setEvType] = useState<'MAPABA' | 'PKD' | 'Sekolah Pemikiran' | 'Sekolah Advokasi' | 'Pelatihan Jurnalistik' | 'Webinar'>('MAPABA');
+  const [evType, setEvType] = useState<string>('MAPABA');
+  const [evCustomType, setEvCustomType] = useState('');
   const [evTheme, setEvTheme] = useState('');
   const [evLocation, setEvLocation] = useState('');
   const [evStart, setEvStart] = useState('');
@@ -506,11 +508,12 @@ export default function AdminDashboardPage() {
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!evTitle.trim() || !evStart) return;
+    const finalEventType = evType === 'Lainnya' ? (evCustomType.trim() || 'Lainnya') : evType;
     const slug = evTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const created = saveEvent({
       title: evTitle,
       slug,
-      eventType: evType,
+      eventType: finalEventType,
       description: evTheme,
       theme: evTheme,
       location: evLocation,
@@ -527,6 +530,8 @@ export default function AdminDashboardPage() {
     });
     setEvents([created, ...events]);
     setEvTitle(''); setEvTheme(''); setEvLocation(''); setEvStart(''); setEvEnd(''); setEvDeadline(''); setEvCP(''); setEvCPPhone(''); setEvQuota(30);
+    setEvType('MAPABA');
+    setEvCustomType('');
     setEvBannerPreview('');
     if (evBannerRef.current) evBannerRef.current.value = '';
     alert(`Pelatihan "${created.title}" berhasil ditambahkan!`);
@@ -609,10 +614,18 @@ export default function AdminDashboardPage() {
   };
 
   // Event Handlers (Edit & Delete)
+  const standardEventTypes = ['MAPABA', 'PKD', 'Sekolah Pemikiran', 'Sekolah Advokasi', 'Pelatihan Jurnalistik', 'Webinar'];
+
   const openEditEvent = (ev: typeof events[0]) => {
     setEditingEventId(ev.id);
     setEditEvTitle(ev.title);
-    setEditEvType(ev.eventType);
+    if (standardEventTypes.includes(ev.eventType)) {
+      setEditEvType(ev.eventType);
+      setEditEvCustomType('');
+    } else {
+      setEditEvType('Lainnya');
+      setEditEvCustomType(ev.eventType);
+    }
     setEditEvTheme(ev.theme);
     setEditEvLocation(ev.location);
     setEditEvStart(ev.startDate);
@@ -629,9 +642,10 @@ export default function AdminDashboardPage() {
   const handleSaveEditEvent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingEventId || !editEvTitle.trim()) return;
+    const finalEventType = editEvType === 'Lainnya' ? (editEvCustomType.trim() || 'Lainnya') : editEvType;
     const updated = updateEvent(editingEventId, {
       title: editEvTitle,
-      eventType: editEvType,
+      eventType: finalEventType,
       theme: editEvTheme,
       description: editEvTheme,
       location: editEvLocation,
@@ -1324,13 +1338,14 @@ export default function AdminDashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Jenis Pelatihan *</label>
-                  <select value={evType} onChange={e => setEvType(e.target.value as typeof evType)} className={inputClass}>
+                  <select value={evType} onChange={e => setEvType(e.target.value)} className={inputClass}>
                     <option value="MAPABA">MAPABA</option>
                     <option value="PKD">PKD</option>
                     <option value="Sekolah Pemikiran">Sekolah Pemikiran</option>
                     <option value="Sekolah Advokasi">Sekolah Advokasi</option>
                     <option value="Pelatihan Jurnalistik">Pelatihan Jurnalistik</option>
                     <option value="Webinar">Webinar</option>
+                    <option value="Lainnya">Lainnya</option>
                   </select>
                 </div>
                 <div>
@@ -1338,6 +1353,19 @@ export default function AdminDashboardPage() {
                   <input type="number" min={1} value={evQuota} onChange={e => setEvQuota(Number(e.target.value))} className={inputClass} />
                 </div>
               </div>
+              {evType === 'Lainnya' && (
+                <div>
+                  <label className={labelClass}>Sebutkan Jenis Pelatihan Lainnya *</label>
+                  <input
+                    required
+                    type="text"
+                    value={evCustomType}
+                    onChange={e => setEvCustomType(e.target.value)}
+                    placeholder="Contoh: Sekolah Kader Kopri (SKK), Workshop Digital, dll."
+                    className={inputClass}
+                  />
+                </div>
+              )}
               <div>
                 <label className={labelClass}>Tema / Deskripsi</label>
                 <textarea rows={2} value={evTheme} onChange={e => setEvTheme(e.target.value)} placeholder="Tema atau gambaran pelatihan" className={inputClass} />
@@ -1472,13 +1500,14 @@ export default function AdminDashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Jenis Pelatihan</label>
-                  <select value={editEvType} onChange={e => setEditEvType(e.target.value as typeof editEvType)} className={inputClass}>
+                  <select value={editEvType} onChange={e => setEditEvType(e.target.value)} className={inputClass}>
                     <option value="MAPABA">MAPABA</option>
                     <option value="PKD">PKD</option>
                     <option value="Sekolah Pemikiran">Sekolah Pemikiran</option>
                     <option value="Sekolah Advokasi">Sekolah Advokasi</option>
                     <option value="Pelatihan Jurnalistik">Pelatihan Jurnalistik</option>
                     <option value="Webinar">Webinar</option>
+                    <option value="Lainnya">Lainnya</option>
                   </select>
                 </div>
                 <div>
@@ -1486,6 +1515,19 @@ export default function AdminDashboardPage() {
                   <input type="number" min={1} value={editEvQuota} onChange={e => setEditEvQuota(Number(e.target.value))} className={inputClass} />
                 </div>
               </div>
+              {editEvType === 'Lainnya' && (
+                <div>
+                  <label className={labelClass}>Sebutkan Jenis Pelatihan Lainnya *</label>
+                  <input
+                    required
+                    type="text"
+                    value={editEvCustomType}
+                    onChange={e => setEditEvCustomType(e.target.value)}
+                    placeholder="Contoh: Sekolah Kader Kopri (SKK), Workshop Digital, dll."
+                    className={inputClass}
+                  />
+                </div>
+              )}
               <div>
                 <label className={labelClass}>Tema / Deskripsi</label>
                 <textarea rows={2} value={editEvTheme} onChange={e => setEditEvTheme(e.target.value)} className={inputClass} />

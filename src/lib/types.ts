@@ -67,7 +67,7 @@ export interface TrainingEvent {
   id: string;
   title: string;
   slug: string;
-  eventType: 'MAPABA' | 'PKD' | 'Sekolah Pemikiran' | 'Sekolah Advokasi' | 'Pelatihan Jurnalistik' | 'Webinar';
+  eventType: 'MAPABA' | 'PKD' | 'Sekolah Pemikiran' | 'Sekolah Advokasi' | 'Pelatihan Jurnalistik' | 'Webinar' | 'Lainnya' | string;
   description: string;
   theme: string;
   location: string;
