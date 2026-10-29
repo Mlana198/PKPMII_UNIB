@@ -64,6 +64,7 @@ import {
   CheckCircle2,
   X,
   AlertCircle,
+  ZoomIn,
 } from 'lucide-react';
 import { getLeadership, setLeadership } from '@/lib/leadership';
 
@@ -405,6 +406,7 @@ export default function AdminDashboardPage() {
   const [evRequirements, setEvRequirements] = useState("Mahasiswa aktif\nMengisi formulir pendaftaran\nBersedia mengikuti seluruh rangkaian acara");
   const [evWhatsappGroup, setEvWhatsappGroup] = useState('');
   const [evBannerPreview, setEvBannerPreview] = useState('');
+  const [previewBannerModal, setPreviewBannerModal] = useState<string | null>(null);
   const evBannerRef = useRef<HTMLInputElement>(null);
 
   const processEventBanner = (file: File, setter: (v: string) => void) => {
@@ -1609,8 +1611,20 @@ export default function AdminDashboardPage() {
               <div>
                 <label className={labelClass}>Banner Pelatihan</label>
                 {evBannerPreview ? (
-                  <div className="relative mb-2">
-                    <img src={evBannerPreview} alt="Preview banner" className="w-full h-32 object-cover rounded-lg border border-[#E2E8EF]" />
+                  <div className="relative mb-2 group">
+                    <img
+                      src={evBannerPreview}
+                      alt="Preview banner"
+                      onClick={() => setPreviewBannerModal(evBannerPreview)}
+                      className="w-full h-32 object-cover rounded-lg border border-[#E2E8EF] cursor-pointer hover:opacity-95 transition-opacity"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPreviewBannerModal(evBannerPreview)}
+                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1 backdrop-blur-xs transition-opacity"
+                    >
+                      <ZoomIn className="w-3 h-3" /> Preview Ukuran Asli
+                    </button>
                     <button
                       type="button"
                       onClick={() => { setEvBannerPreview(''); if (evBannerRef.current) evBannerRef.current.value = ''; }}
@@ -1803,8 +1817,20 @@ export default function AdminDashboardPage() {
               <div>
                 <label className={labelClass}>Banner Pelatihan</label>
                 {editEvBannerPreview ? (
-                  <div className="relative mb-2">
-                    <img src={editEvBannerPreview} alt="Preview banner" className="w-full h-28 object-cover rounded-lg border border-[#E2E8EF]" />
+                  <div className="relative mb-2 group">
+                    <img
+                      src={editEvBannerPreview}
+                      alt="Preview banner"
+                      onClick={() => setPreviewBannerModal(editEvBannerPreview)}
+                      className="w-full h-28 object-cover rounded-lg border border-[#E2E8EF] cursor-pointer hover:opacity-95 transition-opacity"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPreviewBannerModal(editEvBannerPreview)}
+                      className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1 backdrop-blur-xs transition-opacity"
+                    >
+                      <ZoomIn className="w-3 h-3" /> Preview Ukuran Asli
+                    </button>
                     <button
                       type="button"
                       onClick={() => { setEditEvBannerPreview(''); if (editEvBannerRef.current) editEvBannerRef.current.value = ''; }}
@@ -2775,6 +2801,39 @@ export default function AdminDashboardPage() {
                   ✓ Tahun berdiri rayon berhasil diperbarui!
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Preview Banner Ukuran Asli */}
+      {previewBannerModal && (
+        <div
+          onClick={() => setPreviewBannerModal(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center"
+          >
+            <div className="w-full flex items-center justify-between pb-2 text-white/90 px-1">
+              <span className="text-xs font-semibold">Preview Banner (Ukuran &amp; Proporsi Asli)</span>
+              <button
+                type="button"
+                onClick={() => setPreviewBannerModal(null)}
+                className="bg-white/20 hover:bg-white/30 text-white rounded-full p-1.5 transition-colors flex items-center gap-1 text-xs px-3"
+              >
+                <X className="w-4 h-4" />
+                <span className="text-[11px] font-medium">Tutup</span>
+              </button>
+            </div>
+            <div className="overflow-auto max-h-[85vh] max-w-[95vw] rounded-lg border border-white/20 bg-black/50 p-1 flex items-center justify-center shadow-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewBannerModal}
+                alt="Banner Ukuran Asli"
+                className="max-w-full max-h-[82vh] w-auto h-auto object-contain rounded"
+              />
             </div>
           </div>
         </div>
