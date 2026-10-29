@@ -93,6 +93,16 @@ export function getRayons(): Rayon[] {
   return getItem<Rayon[]>(STORAGE_KEYS.RAYONS, INITIAL_RAYONS);
 }
 
+export function updateRayon(rayonId: string, updates: Partial<Rayon>): Rayon | null {
+  const rayons = getRayons();
+  const index = rayons.findIndex(r => r.id === rayonId);
+  if (index === -1) return null;
+  const updatedRayon = { ...rayons[index], ...updates };
+  rayons[index] = updatedRayon;
+  setItem(STORAGE_KEYS.RAYONS, rayons);
+  return updatedRayon;
+}
+
 // Cadres
 export function getCadres(): CadreProfile[] {
   const cadres = getItem<CadreProfile[]>(STORAGE_KEYS.CADRES, INITIAL_CADRES);

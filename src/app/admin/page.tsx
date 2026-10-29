@@ -31,8 +31,10 @@ import {
   getExternalUsers,
   deleteExternalUser,
   deleteCadre,
+  getRayons,
+  updateRayon,
 } from '@/lib/storage';
-import { ExternalUser } from '@/lib/types';
+import { ExternalUser, Rayon } from '@/lib/types';
 import {
   Users,
   Calendar,
@@ -78,6 +80,8 @@ export default function AdminDashboardPage() {
   const [events, setEvents] = useState(getEvents());
   const [quizzes, setQuizzes] = useState(getQuizzes());
   const [elibrary, setELibrary] = useState(getELibrary());
+  const [rayons, setRayons] = useState<Rayon[]>(getRayons());
+  const [rayonSaved, setRayonSaved] = useState(false);
 
   useEffect(() => {
     setExternalUsers(getExternalUsers());
@@ -751,6 +755,15 @@ export default function AdminDashboardPage() {
     setLeadership(leadership);
     setLeaderSaved(true);
     setTimeout(() => setLeaderSaved(false), 3000);
+  };
+
+  const handleUpdateRayonYear = (rayonId: string, year: number) => {
+    const res = updateRayon(rayonId, { establishedYear: year });
+    if (res) {
+      setRayons(prev => prev.map(r => r.id === rayonId ? { ...r, establishedYear: year } : r));
+      setRayonSaved(true);
+      setTimeout(() => setRayonSaved(false), 3000);
+    }
   };
 
   if (isLoading || !isAdmin) {
@@ -2563,7 +2576,8 @@ export default function AdminDashboardPage() {
 
       {/* Tab Content: Pengaturan Kepengurusan */}
       {activeTab === 'pengaturan' && (
-        <div className="max-w-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+          {/* Form Kepengurusan */}
           <div className="bg-white border border-[#E2E8EF] rounded-lg p-6 shadow-sm space-y-5">
             <div>
               <h2 className="text-sm font-bold text-[#1B3D7B] uppercase tracking-wider">Edit Data Struktural Kepengurusan</h2>
@@ -2614,6 +2628,53 @@ export default function AdminDashboardPage() {
               <p className="font-semibold text-[#64748B] mb-1">Data Saat Ini:</p>
               <p>Ketua: <span className="font-semibold text-[#1E293B]">{leadership.ketua || '(belum diisi)'}</span></p>
               <p>Sekretaris: <span className="font-semibold text-[#1E293B]">{leadership.sekretaris || '(belum diisi)'}</span></p>
+            </div>
+          </div>
+
+          {/* Form Tahun Berdiri Rayon Binaan */}
+          <div className="bg-white border border-[#E2E8EF] rounded-lg p-6 shadow-sm space-y-5">
+            <div>
+              <h2 className="text-sm font-bold text-[#1B3D7B] uppercase tracking-wider">Tahun Berdiri Rayon Binaan</h2>
+              <p className="text-xs text-[#64748B] mt-1">
+                Ubah tahun berdiri rayon untuk ditampilkan pada kartu Rayon di halaman Beranda website.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {rayons.map((rayon) => (
+                <div key={rayon.id} className="border border-[#E2E8EF] rounded-lg p-4 bg-[#F8FAFC] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#1B3D7B]">{rayon.name}</span>
+                    <span className="text-[10px] bg-blue-100 text-[#1B3D7B] font-semibold px-2 py-0.5 rounded">{rayon.code}</span>
+                  </div>
+                  <p className="text-[11px] text-[#64748B]">{rayon.faculty}</p>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#64748B] mb-1">Berdiri Sejak Tahun:</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1960}
+                        max={2099}
+                        defaultValue={rayon.establishedYear || 2012}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val) && val > 1900) {
+                            handleUpdateRayonYear(rayon.id, val);
+                          }
+                        }}
+                        className="w-32 border border-[#CBD5E1] rounded px-3 py-1.5 text-xs text-[#1E293B] bg-white font-bold"
+                      />
+                      <span className="text-xs text-[#64748B]">Tersimpan otomatis</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {rayonSaved && (
+                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-3 py-2 text-center">
+                  ✓ Tahun berdiri rayon berhasil diperbarui!
+                </p>
+              )}
             </div>
           </div>
         </div>
