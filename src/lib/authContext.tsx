@@ -10,17 +10,22 @@ import {
   saveAuthAccount, 
   updateAuthAccount,
   verifyEmailAccount,
-  resetPasswordAccount
+  resetPasswordAccount,
+  saveExternalUser,
+  getExternalUsers
 } from '@/lib/storage';
+import { ExternalUser } from '@/lib/types';
 
 interface AuthContextType {
   user: { id: string; email?: string } | null;
   cadreProfile: CadreProfile | null;
+  externalProfile?: ExternalUser | null;
   account: AuthAccount | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isExternal: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requireVerification?: boolean; unverifiedEmail?: string }>;
-  register: (email: string, password: string, cadreData: Partial<CadreProfile>) => Promise<{ success: boolean; error?: string; verificationCode?: string; email?: string; emailSent?: boolean; emailError?: string }>;
+  register: (email: string, password: string, cadreData: Partial<CadreProfile> & { institutionType?: 'internal' | 'external'; customInstitutionName?: string }) => Promise<{ success: boolean; error?: string; verificationCode?: string; email?: string; emailSent?: boolean; emailError?: string }>;
   verifyEmail: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
   resendVerificationCode: (email: string) => Promise<{ success: boolean; code?: string; error?: string }>;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; code?: string; error?: string }>;
@@ -34,9 +39,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   cadreProfile: null,
+  externalProfile: null,
   account: null,
   isLoading: true,
   isAdmin: false,
+  isExternal: false,
   login: async () => ({ success: false }),
   register: async () => ({ success: false }),
   verifyEmail: async () => ({ success: false }),
@@ -52,6 +59,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [cadreProfile, setCadreProfile] = useState<CadreProfile | null>(null);
+  const [externalProfile, setExternalProfile] = useState<ExternalUser | null>(null);
   const [account, setAccount] = useState<AuthAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,11 +72,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
     setCadreProfile(matchedCadre || null);
 
+    // Cari juga di data external users jika bukan kader internal
+    const extUsers = getExternalUsers();
+    const matchedExt = extUsers.find(
+      (u) => (cleanEmail && u.email.toLowerCase() === cleanEmail) || u.id === userId
+    );
+    setExternalProfile(matchedExt || null);
+
     if (cleanEmail) {
       const acc = getAuthAccountByEmail(cleanEmail);
       setAccount(acc || null);
     } else if (matchedCadre) {
       const acc = getAuthAccountByEmail(matchedCadre.email);
+      setAccount(acc || null);
+    } else if (matchedExt) {
+      const acc = getAuthAccountByEmail(matchedExt.email);
       setAccount(acc || null);
     } else {
       setAccount(null);
@@ -217,7 +235,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true };
   };
 
-  const register = async (email: string, password: string, cadreData: Partial<CadreProfile>) => {
+  const register = async (
+    email: string, 
+    password: string, 
+    cadreData: Partial<CadreProfile> & { institutionType?: 'internal' | 'external'; customInstitutionName?: string }
+  ) => {
     setIsLoading(true);
     const cleanEmail = email.trim().toLowerCase();
 
@@ -228,49 +250,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Email ini sudah terdaftar. Silakan gunakan email lain atau login.' };
     }
 
-    const userId = `kdr-${Date.now()}`;
     // Buat kode verifikasi 6 digit acak
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const isInternal = cadreData.institutionType === 'internal' && (cadreData.rayonId === 'ryn-1' || cadreData.rayonId === 'ryn-2');
 
-    // Buat & Simpan Profil Kader
-    const newProfile: CadreProfile = {
-      id: userId,
-      fullName: cadreData.fullName || 'Kader PMII',
-      nim: cadreData.nim || '',
-      university: 'Universitas Ibrahimy',
-      rayonId: cadreData.rayonId || 'ryn-1',
-      rayonName: cadreData.rayonName || 'Rayon Raden Rahmat',
-      faculty: cadreData.faculty || 'Fakultas Sains dan Teknologi',
-      studyProgram: cadreData.studyProgram || '',
-      entryYear: cadreData.entryYear || 2024,
-      mapabaYear: cadreData.mapabaYear || 2024,
-      cadreLevel: cadreData.cadreLevel || 'MAPABA',
-      gender: cadreData.gender || 'Laki-laki',
-      nonFormalTrainings: [],
-      phoneNumber: cadreData.phoneNumber || '',
-      email: cleanEmail,
-      ktaNumber: cadreData.ktaNumber || `PMII-UNIB/${new Date().getFullYear()}/${cadreData.rayonId === 'ryn-2' ? 'RUS' : 'RR'}/${cadreData.nim?.slice(-4) || '0001'}`,
-      isVerified: false,
-      avatarUrl: cadreData.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300',
-      specializationInterest: cadreData.specializationInterest || 'Kaderisasi',
-      address: cadreData.address || '',
-      createdAt: new Date().toISOString(),
-    };
+    let createdId = '';
+    let displayName = cadreData.fullName || 'Pengguna PMII';
 
-    const cadres = getCadres();
-    cadres.unshift(newProfile);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('pmii_cadres', JSON.stringify(cadres));
+    if (isInternal) {
+      // 1. Pendaftar asal UNIB (Rayon Raden Rahmat / Rayon Raden Umar Said) -> Masuk ke Database Kader
+      const userId = `kdr-${Date.now()}`;
+      createdId = userId;
+      const newProfile: CadreProfile = {
+        id: userId,
+        fullName: cadreData.fullName || 'Kader PMII',
+        nim: cadreData.nim || '',
+        university: 'Universitas Ibrahimy',
+        rayonId: cadreData.rayonId || 'ryn-1',
+        rayonName: cadreData.rayonName || 'Rayon Raden Rahmat',
+        faculty: cadreData.faculty || 'Fakultas Sains dan Teknologi',
+        studyProgram: cadreData.studyProgram || '',
+        entryYear: cadreData.entryYear || 2024,
+        mapabaYear: cadreData.mapabaYear || 2024,
+        cadreLevel: cadreData.cadreLevel || 'MAPABA',
+        gender: cadreData.gender || 'Laki-laki',
+        nonFormalTrainings: [],
+        phoneNumber: cadreData.phoneNumber || '',
+        email: cleanEmail,
+        ktaNumber: cadreData.ktaNumber || `PMII-UNIB/${new Date().getFullYear()}/${cadreData.rayonId === 'ryn-2' ? 'RUS' : 'RR'}/${cadreData.nim?.slice(-4) || '0001'}`,
+        isVerified: false,
+        avatarUrl: cadreData.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300',
+        specializationInterest: cadreData.specializationInterest || 'Kaderisasi',
+        address: cadreData.address || '',
+        createdAt: new Date().toISOString(),
+      };
+
+      const cadres = getCadres();
+      cadres.unshift(newProfile);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pmii_cadres', JSON.stringify(cadres));
+      }
+      displayName = newProfile.fullName;
+    } else {
+      // 2. Pendaftar Luar UNIB (Lainnya / Eksternal) -> Dialihkan ke Data Pengguna Eksternal (bukan database kader)
+      const extId = `ext-${Date.now()}`;
+      createdId = extId;
+      const extUser: ExternalUser = {
+        id: extId,
+        fullName: cadreData.fullName || 'Pengguna Eksternal',
+        email: cleanEmail,
+        phoneNumber: cadreData.phoneNumber || '',
+        institutionName: cadreData.customInstitutionName?.trim() || cadreData.university || 'Luar Universitas Ibrahimy',
+        studyProgram: cadreData.studyProgram || '',
+        gender: cadreData.gender || 'Laki-laki',
+        avatarUrl: cadreData.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300',
+        createdAt: new Date().toISOString(),
+      };
+
+      saveExternalUser(extUser);
+      displayName = extUser.fullName;
     }
 
     // Buat Akun Kredensial Baru dengan verificationCode
     const newAccount: AuthAccount = {
       email: cleanEmail,
       password,
-      cadreId: userId,
-      isEmailVerified: false, // Wajib diverifikasi email
+      cadreId: createdId,
+      isEmailVerified: false,
       verificationCode,
-      role: 'kader',
+      role: isInternal ? 'kader' : 'eksternal',
       createdAt: new Date().toISOString(),
     };
     saveAuthAccount(newAccount);
@@ -285,7 +333,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: cleanEmail,
           code: verificationCode,
           type: 'verification',
-          fullName: newProfile.fullName,
+          fullName: displayName,
         }),
       });
       emailStatusNote = await emailRes.json().catch(() => undefined);
@@ -528,14 +576,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     account?.role === 'superadmin'
   );
 
+  const isExternal = Boolean(account?.role === 'eksternal');
+
   return (
     <AuthContext.Provider
       value={{
         user,
         cadreProfile,
+        externalProfile,
         account,
         isLoading,
         isAdmin,
+        isExternal,
         login,
         register,
         verifyEmail,

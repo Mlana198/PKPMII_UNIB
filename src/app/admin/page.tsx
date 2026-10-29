@@ -28,7 +28,10 @@ import {
   saveELibrary,
   updateELibrary,
   deleteELibrary,
+  getExternalUsers,
+  deleteExternalUser,
 } from '@/lib/storage';
+import { ExternalUser } from '@/lib/types';
 import {
   Users,
   Calendar,
@@ -65,14 +68,19 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, isLoading, isAdmin, adminUpdateCadreAccount } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'kader' | 'pendaftaran' | 'cbt' | 'artikel' | 'pelatihan' | 'quiz' | 'elibrary' | 'pengaturan'>('kader');
+  const [activeTab, setActiveTab] = useState<'kader' | 'eksternal' | 'pendaftaran' | 'cbt' | 'artikel' | 'pelatihan' | 'quiz' | 'elibrary' | 'pengaturan'>('kader');
   const [cadres, setCadres] = useState(getCadres());
+  const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
   const [registrations, setRegistrations] = useState(getRegistrations());
   const [attempts] = useState(getQuizAttempts());
   const [articles, setArticles] = useState(getArticles());
   const [events, setEvents] = useState(getEvents());
   const [quizzes, setQuizzes] = useState(getQuizzes());
   const [elibrary, setELibrary] = useState(getELibrary());
+
+  useEffect(() => {
+    setExternalUsers(getExternalUsers());
+  }, []);
 
   // Kelola Akun & Edit Informasi Kader modal state
   const [kelolaModal, setKelolaModal] = useState(false);
@@ -439,7 +447,8 @@ export default function AdminDashboardPage() {
   }, [user, isAdmin, isLoading, router]);
 
   const tabs = [
-    { id: 'kader', label: 'Database & Verifikasi Kader', count: cadres.length, icon: Users },
+    { id: 'kader', label: 'Database Kader (UNIB)', count: cadres.length, icon: Users },
+    { id: 'eksternal', label: 'Pengguna Eksternal', count: externalUsers.length, icon: Users },
     { id: 'pendaftaran', label: 'Skrining Pelatihan', count: registrations.length, icon: Calendar },
     { id: 'pelatihan', label: 'Tambah Pelatihan', count: events.length, icon: Calendar },
     { id: 'cbt', label: 'Hasil Ujian CBT', count: attempts.length, icon: Award },
@@ -939,6 +948,74 @@ export default function AdminDashboardPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Content: Pengguna Eksternal (Luar UNIB) */}
+      {activeTab === 'eksternal' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-xs text-[#64748B] px-1">
+            <p>
+              Menampilkan data akun pendaftar dari <strong>Luar Lembaga UNIB</strong> (Lembaga Asal Lainnya). Data ini dipisahkan dari database kader resmi.
+            </p>
+            <span className="text-xs bg-slate-100 text-[#1E293B] font-semibold px-2.5 py-1 rounded">
+              Total Pengguna Eksternal: {externalUsers.length}
+            </span>
+          </div>
+
+          <div className="bg-white border border-[#E2E8EF] rounded-lg overflow-x-auto shadow-sm">
+            {externalUsers.length === 0 ? (
+              <div className="py-16 text-center text-[#64748B] text-xs">
+                Belum ada pengguna dari luar lembaga UNIB yang terdaftar.
+              </div>
+            ) : (
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="bg-slate-100 text-[#1E293B] font-bold">
+                    <th className={`${thClass} w-10 text-center`}>NO</th>
+                    <th className={thClass}>NAMA LENGKAP</th>
+                    <th className={thClass}>LEMBAGA / INSTANSI ASAL</th>
+                    <th className={thClass}>PROGRAM STUDI</th>
+                    <th className={thClass}>NO. TELEPON / WA</th>
+                    <th className={thClass}>EMAIL</th>
+                    <th className={`${thClass} text-center`}>JENIS KELAMIN</th>
+                    <th className={`${thClass} text-center`}>TANGGAL DAFTAR</th>
+                    <th className={`${thClass} text-right`}>AKSI</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8EF]">
+                  {externalUsers.map((u, idx) => (
+                    <tr key={u.id} className="hover:bg-[#F8FAFC] transition-colors">
+                      <td className={`${tdClass} text-center font-bold`}>{idx + 1}.</td>
+                      <td className={`${tdClass} font-bold text-[#1E293B]`}>{u.fullName}</td>
+                      <td className={`${tdClass} font-semibold text-[#1B3D7B]`}>{u.institutionName}</td>
+                      <td className={tdClass}>{u.studyProgram || '-'}</td>
+                      <td className={`${tdClass} font-mono`}>{u.phoneNumber || '-'}</td>
+                      <td className={`${tdClass} text-blue-700 underline font-sans`}>
+                        <a href={`mailto:${u.email}`}>{u.email}</a>
+                      </td>
+                      <td className={`${tdClass} text-center`}>{u.gender || '-'}</td>
+                      <td className={`${tdClass} text-center text-[#64748B]`}>
+                        {new Date(u.createdAt).toLocaleDateString('id-ID')}
+                      </td>
+                      <td className={`${tdClass} text-right`}>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Hapus data akun eksternal "${u.fullName}"?`)) {
+                              setExternalUsers(deleteExternalUser(u.id));
+                            }
+                          }}
+                          className="text-xs px-2.5 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 font-medium inline-flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" /> Hapus
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}

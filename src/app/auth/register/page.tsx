@@ -22,7 +22,8 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
   const [nim, setNim] = useState('');
-  const [rayonId, setRayonId] = useState(rayons[0]?.id || 'ryn-1');
+  const [institutionChoice, setInstitutionChoice] = useState<'ryn-1' | 'ryn-2' | 'lainnya'>('ryn-1');
+  const [customInstitution, setCustomInstitution] = useState('');
   const [studyProgram, setStudyProgram] = useState('');
   const [entryYear, setEntryYear] = useState(2024);
   const [cadreLevel, setCadreLevel] = useState<FormalCadreLevel>('MAPABA');
@@ -101,22 +102,25 @@ export default function RegisterPage() {
     }
 
     setSubmitting(true);
-    const selectedRayonObj = rayons.find((r) => r.id === rayonId);
+    const isInternal = institutionChoice === 'ryn-1' || institutionChoice === 'ryn-2';
+    const selectedRayonObj = isInternal ? rayons.find((r) => r.id === institutionChoice) : undefined;
 
     const res = await register(email, password, {
       fullName,
       gender,
-      nim,
-      university: 'Universitas Ibrahimy',
-      rayonId,
-      rayonName: selectedRayonObj?.name || 'Rayon Raden Rahmat',
-      faculty: selectedRayonObj?.faculty || 'Fakultas Sains dan Teknologi',
+      nim: isInternal ? nim : (nim || '-'),
+      university: isInternal ? 'Universitas Ibrahimy' : (customInstitution.trim() || 'Luar UNIB'),
+      rayonId: isInternal ? institutionChoice : 'eksternal',
+      rayonName: isInternal ? (selectedRayonObj?.name || 'Rayon Raden Rahmat') : (customInstitution.trim() || 'Lembaga Luar UNIB'),
+      faculty: isInternal ? (selectedRayonObj?.faculty || 'Fakultas Sains dan Teknologi') : 'Luar UNIB',
       studyProgram,
       entryYear: Number(entryYear),
       mapabaYear: Number(entryYear),
-      cadreLevel,
+      cadreLevel: isInternal ? cadreLevel : 'Calon Anggota',
       phoneNumber,
       email,
+      institutionType: isInternal ? 'internal' : 'external',
+      customInstitutionName: customInstitution.trim(),
       avatarUrl: avatarPreview || (gender === 'Perempuan' 
         ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300' 
         : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300'),
@@ -367,15 +371,15 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
-                  Nomor Induk Mahasiswa (NIM) *
+                  {institutionChoice === 'lainnya' ? 'Nomor Induk / Identitas (Opsional)' : 'Nomor Induk Mahasiswa (NIM) *'}
                 </label>
                 <input
                   suppressHydrationWarning
-                  required
+                  required={institutionChoice !== 'lainnya'}
                   type="text"
                   value={nim}
                   onChange={(e) => setNim(e.target.value)}
-                  placeholder="Contoh: 240501110077"
+                  placeholder={institutionChoice === 'lainnya' ? 'NIM / NIK / ID (opsional)' : 'Contoh: 240501110077'}
                   className={`${inputClass} font-mono`}
                 />
               </div>
@@ -398,22 +402,40 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
-                  Rayon Binaan *
+                  Lembaga Asal *
                 </label>
                 <select
                   suppressHydrationWarning
-                  value={rayonId}
-                  onChange={(e) => setRayonId(e.target.value)}
+                  value={institutionChoice}
+                  onChange={(e) => setInstitutionChoice(e.target.value as 'ryn-1' | 'ryn-2' | 'lainnya')}
                   className={inputClass}
                 >
-                  {rayons.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
+                  <option value="ryn-1">Rayon Raden Rahmat (UNIB)</option>
+                  <option value="ryn-2">Rayon Raden Umar Said (UNIB)</option>
+                  <option value="lainnya">Lainnya (Luar UNIB / Umum)</option>
                 </select>
               </div>
             </div>
+
+            {institutionChoice === 'lainnya' && (
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                  Nama Lembaga / Kampus / Instansi Asal *
+                </label>
+                <input
+                  suppressHydrationWarning
+                  required
+                  type="text"
+                  value={customInstitution}
+                  onChange={(e) => setCustomInstitution(e.target.value)}
+                  placeholder="Contoh: Universitas Jember / UIN KHAS / Umum"
+                  className={inputClass}
+                />
+                <p className="text-[10px] text-[#64748B] mt-1">
+                  ℹ️ Akun dari luar lembaga UNIB akan terdaftar sebagai <strong>Pengguna Eksternal</strong> (untuk akses pelatihan, e-library, & CBT umum).
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -446,22 +468,24 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
-                Jenjang Kaderisasi
-              </label>
-              <select
-                suppressHydrationWarning
-                value={cadreLevel}
-                onChange={(e) => setCadreLevel(e.target.value as FormalCadreLevel)}
-                className={inputClass}
-              >
-                <option value="Calon Anggota">Calon Anggota</option>
-                <option value="MAPABA">MAPABA</option>
-                <option value="PKD">PKD</option>
-                <option value="PKL">PKL</option>
-              </select>
-            </div>
+            {institutionChoice !== 'lainnya' && (
+              <div>
+                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                  Jenjang Kaderisasi
+                </label>
+                <select
+                  suppressHydrationWarning
+                  value={cadreLevel}
+                  onChange={(e) => setCadreLevel(e.target.value as FormalCadreLevel)}
+                  className={inputClass}
+                >
+                  <option value="Calon Anggota">Calon Anggota</option>
+                  <option value="MAPABA">MAPABA</option>
+                  <option value="PKD">PKD</option>
+                  <option value="PKL">PKL</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <button

@@ -1,6 +1,18 @@
-export type UserRole = 'superadmin' | 'kaderisasi' | 'media' | 'rayon' | 'kader';
+export type UserRole = 'superadmin' | 'kaderisasi' | 'media' | 'rayon' | 'kader' | 'eksternal';
 
 export type FormalCadreLevel = 'Calon Anggota' | 'MAPABA' | 'PKD' | 'PKL' | 'PKN';
+
+export interface ExternalUser {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  institutionName: string;
+  studyProgram?: string;
+  gender?: 'Laki-laki' | 'Perempuan';
+  avatarUrl?: string;
+  createdAt: string;
+}
 
 export interface AuthAccount {
   email: string;

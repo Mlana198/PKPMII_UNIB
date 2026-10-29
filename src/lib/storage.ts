@@ -7,7 +7,8 @@ import {
   QuizAttempt, 
   ELibraryItem, 
   Rayon,
-  AuthAccount
+  AuthAccount,
+  ExternalUser
 } from './types';
 import { 
   INITIAL_CADRES, 
@@ -29,6 +30,7 @@ const STORAGE_KEYS = {
   ELIBRARY: 'pmii_elibrary',
   RAYONS: 'pmii_rayons',
   ACCOUNTS: 'pmii_auth_accounts',
+  EXTERNAL_USERS: 'pmii_external_users',
 };
 
 // Akun bawaan (Admin & Kader Demo)
@@ -136,6 +138,34 @@ export function updateCadre(cadreId: string, updates: Partial<CadreProfile>): Ca
   cadres[index] = updatedProfile;
   setItem(STORAGE_KEYS.CADRES, cadres);
   return updatedProfile;
+}
+
+// ==================== EXTERNAL USERS ====================
+export function getExternalUsers(): ExternalUser[] {
+  return getItem<ExternalUser[]>(STORAGE_KEYS.EXTERNAL_USERS, []);
+}
+
+export function saveExternalUser(user: ExternalUser): ExternalUser {
+  const users = getExternalUsers();
+  const cleanEmail = user.email.trim().toLowerCase();
+  const existingIdx = users.findIndex((u) => u.email.toLowerCase() === cleanEmail);
+
+  let updated: ExternalUser[];
+  if (existingIdx !== -1) {
+    users[existingIdx] = user;
+    updated = [...users];
+  } else {
+    updated = [user, ...users];
+  }
+  setItem(STORAGE_KEYS.EXTERNAL_USERS, updated);
+  return user;
+}
+
+export function deleteExternalUser(id: string): ExternalUser[] {
+  const users = getExternalUsers();
+  const updated = users.filter((u) => u.id !== id);
+  setItem(STORAGE_KEYS.EXTERNAL_USERS, updated);
+  return updated;
 }
 
 // ==================== AUTH ACCOUNTS ====================
