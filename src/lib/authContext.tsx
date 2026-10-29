@@ -20,7 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requireVerification?: boolean; unverifiedEmail?: string }>;
-  register: (email: string, password: string, cadreData: Partial<CadreProfile>) => Promise<{ success: boolean; error?: string; verificationCode?: string; email?: string }>;
+  register: (email: string, password: string, cadreData: Partial<CadreProfile>) => Promise<{ success: boolean; error?: string; verificationCode?: string; email?: string; emailSent?: boolean; emailError?: string }>;
   verifyEmail: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
   resendVerificationCode: (email: string) => Promise<{ success: boolean; code?: string; error?: string }>;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; code?: string; error?: string }>;
@@ -276,8 +276,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     saveAuthAccount(newAccount);
 
     // Kirim email OTP nyata via server endpoint
+    let emailStatusNote: { success: boolean; error?: string; sentReal?: boolean; warning?: string } | undefined;
     try {
-      await fetch('/api/auth/send-email', {
+      const emailRes = await fetch('/api/auth/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -287,6 +288,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           fullName: newProfile.fullName,
         }),
       });
+      emailStatusNote = await emailRes.json().catch(() => undefined);
+      if (!emailRes.ok || !emailStatusNote?.success) {
+        console.warn('API send-email response warning:', emailStatusNote);
+      }
     } catch (emailErr) {
       console.warn('Gagal memanggil API kirim email OTP:', emailErr);
     }
@@ -295,7 +300,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { 
       success: true, 
       verificationCode, 
-      email: cleanEmail 
+      email: cleanEmail,
+      emailSent: emailStatusNote?.sentReal ?? false,
+      emailError: emailStatusNote?.error || emailStatusNote?.warning,
     };
   };
 

@@ -37,6 +37,7 @@ export default function RegisterPage() {
   const [verifyModal, setVerifyModal] = useState(false);
   const [verificationCodeDisplay, setVerificationCodeDisplay] = useState('');
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [emailDeliveryStatus, setEmailDeliveryStatus] = useState<{ sent: boolean; error?: string }>({ sent: false });
 
 
   const processAvatarFile = (file: File) => {
@@ -125,6 +126,7 @@ export default function RegisterPage() {
       if (res.verificationCode) {
         setVerificationCodeDisplay(res.verificationCode);
         setRegisteredEmail(res.email || email.trim());
+        setEmailDeliveryStatus({ sent: Boolean(res.emailSent), error: res.emailError });
         setVerifyModal(true);
       } else {
         router.push('/kader/dashboard');
@@ -490,8 +492,17 @@ export default function RegisterPage() {
             <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
             <h2 className="text-lg font-bold text-[#1E293B]">Pendaftaran Berhasil!</h2>
             <p className="text-xs text-[#64748B]">
-              Kode verifikasi telah dikirimkan ke <strong>{registeredEmail}</strong>. Periksa kotak masuk (Inbox) atau folder <strong>Spam</strong> email Anda.
+              {emailDeliveryStatus.sent ? (
+                <>Email berisi kode telah terkirim ke <strong>{registeredEmail}</strong>. Silakan periksa kotak masuk atau spam.</>
+              ) : (
+                <>Akun Anda berhasil didaftarkan untuk <strong>{registeredEmail}</strong>.</>
+              )}
             </p>
+            {emailDeliveryStatus.error && !emailDeliveryStatus.sent && (
+              <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 text-left">
+                ℹ️ Status Mailer: {emailDeliveryStatus.error}
+              </p>
+            )}
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center space-y-2">

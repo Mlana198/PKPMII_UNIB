@@ -2,34 +2,9 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 
-// Konfigurasi SMTP murni dari Environment Variables (tanpa hardcode kredensial contoh)
-const smtpHost = process.env.MAIL_HOST;
-const smtpPort = Number(process.env.MAIL_PORT || 465);
-const smtpUser = process.env.MAIL_USERNAME;
-const smtpPass = process.env.MAIL_PASSWORD;
-const mailFromAddress = process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME || 'noreply@pmii-unib.org';
-const mailFromName = process.env.MAIL_FROM_NAME || 'PK PMII UNIB';
-
-// Transporter SMTP via Nodemailer (hanya aktif jika konfigurasi environment disetel)
-const smtpTransporter = (smtpHost && smtpUser && smtpPass)
-  ? nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    })
-  : null;
-
 // Ambil RESEND_API_KEY dari env jika ingin digunakan sebagai alternatif
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const fromEmail = process.env.EMAIL_FROM || `${mailFromName} <${mailFromAddress}>`;
 
 // In-Memory Rate Limiter: Maksimal 5 permintaan OTP per email dalam 10 menit
 const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
@@ -178,10 +153,30 @@ export async function POST(req: Request) {
       </html>
     `;
 
-    // 1. Prioritas Utama: Kirim via SMTP Server (mail.siapkerja.net)
-    if (smtpTransporter) {
+    const smtpHost = process.env.MAIL_HOST;
+    const smtpPort = Number(process.env.MAIL_PORT || 465);
+    const smtpUser = process.env.MAIL_USERNAME;
+    const smtpPass = process.env.MAIL_PASSWORD;
+    const mailFromAddress = process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME || 'noreply@pmii-unib.org';
+    const mailFromName = process.env.MAIL_FROM_NAME || 'PK PMII UNIB';
+
+    // 1. Prioritas Utama: Kirim via SMTP Server (Gmail / Webmail) jika variabel disetel
+    if (smtpHost && smtpUser && smtpPass) {
       try {
-        const info = await smtpTransporter.sendMail({
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: {
+            user: smtpUser,
+            pass: smtpPass,
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+        });
+
+        const info = await transporter.sendMail({
           from: `"${mailFromName}" <${mailFromAddress}>`,
           to: cleanEmail,
           subject,
@@ -197,21 +192,23 @@ export async function POST(req: Request) {
         });
       } catch (smtpError: unknown) {
         console.error('[SMTP Send Error]', smtpError);
-        // Jika SMTP gagal dan Resend ada, lanjutkan fallback ke Resend
-        if (!resend) {
-          const errMsg = smtpError instanceof Error ? smtpError.message : 'Gagal mengirim email melalui SMTP.';
-          return NextResponse.json(
-            { success: false, error: errMsg, sentReal: false },
-            { status: 500 }
-          );
-        }
+        const errMsg = smtpError instanceof Error ? smtpError.message : 'Gagal mengirim email melalui SMTP.';
+        // Jika SMTP error, sertakan error detail ke response
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: `Gagal mengirim email via SMTP (${smtpUser}): ${errMsg}`, 
+            sentReal: false 
+          },
+          { status: 500 }
+        );
       }
     }
 
     // 2. Fallback: Kirim via Resend API jika dikonfigurasi
     if (resend) {
       const { data, error } = await resend.emails.send({
-        from: fromEmail,
+        from: `${mailFromName} <${mailFromAddress}>`,
         to: cleanEmail,
         subject,
         html: htmlContent,
