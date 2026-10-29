@@ -109,6 +109,13 @@ export default function HomePage() {
               ? '/images/logos/rayon-raden-umar-said.png'
               : '/images/logos/rayon-raden-rahmat.png';
 
+            // Hitung secara dinamis jumlah kader terdata pada rayon ini
+            const dynamicCadresCount = cadres.filter(
+              (c) => c.rayonId === rayon.id || 
+                     (rayon.id === 'ryn-1' && c.faculty?.toLowerCase().includes('sains')) ||
+                     (rayon.id === 'ryn-2' && c.faculty?.toLowerCase().includes('tarbiyah'))
+            ).length;
+
             return (
               <div key={rayon.id} className="bg-white border border-[#E2E8EF] rounded-xl p-6 hover:border-[#1B3D7B] transition-colors shadow-sm">
                 <div className="flex items-start justify-between gap-4">
@@ -126,8 +133,8 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-2xl font-bold text-[#D4A017]">{rayon.totalCadres}</div>
-                    <div className="text-[10px] text-[#94A3B8] uppercase">Kader Aktif</div>
+                    <div className="text-2xl font-bold text-[#D4A017]">{dynamicCadresCount}</div>
+                    <div className="text-[10px] text-[#94A3B8] uppercase font-semibold">Kader Terdata</div>
                   </div>
                 </div>
                 <div className="mt-5 pt-4 border-t border-[#E2E8EF] flex items-center justify-between text-xs text-[#64748B]">
