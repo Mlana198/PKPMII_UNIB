@@ -2,31 +2,31 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 
-// Konfigurasi SMTP (Prioritas Utama jika tersedia atau fallback ke kredensial siapkerja.net)
-const smtpHost = process.env.MAIL_HOST || 'mail.siapkerja.net';
+// Konfigurasi SMTP murni dari Environment Variables (tanpa hardcode kredensial contoh)
+const smtpHost = process.env.MAIL_HOST;
 const smtpPort = Number(process.env.MAIL_PORT || 465);
-const smtpUser = process.env.MAIL_USERNAME || 'noreply@siapkerja.net';
-const smtpPass = process.env.MAIL_PASSWORD || 'U5fbwxwu?+Q!F^Rz';
-const mailFromAddress = process.env.MAIL_FROM_ADDRESS || 'noreply@siapkerja.net';
+const smtpUser = process.env.MAIL_USERNAME;
+const smtpPass = process.env.MAIL_PASSWORD;
+const mailFromAddress = process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME || 'noreply@pmii-unib.org';
 const mailFromName = process.env.MAIL_FROM_NAME || 'PK PMII UNIB';
 
-// Transporter SMTP via Nodemailer
+// Transporter SMTP via Nodemailer (hanya aktif jika konfigurasi environment disetel)
 const smtpTransporter = (smtpHost && smtpUser && smtpPass)
   ? nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465, // SSL jika port 465
+      secure: smtpPort === 465,
       auth: {
         user: smtpUser,
         pass: smtpPass,
       },
       tls: {
-        rejectUnauthorized: false, // Menghindari reject sertifikat self-signed jika ada
+        rejectUnauthorized: false,
       },
     })
   : null;
 
-// Ambil RESEND_API_KEY dari env jika ingin digunakan sebagai fallback
+// Ambil RESEND_API_KEY dari env jika ingin digunakan sebagai alternatif
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 const fromEmail = process.env.EMAIL_FROM || `${mailFromName} <${mailFromAddress}>`;
@@ -238,13 +238,13 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3. Fallback jika tidak ada mailer aktif
-    console.warn(`[OTP Server Log] Mailer tidak terdeteksi. Kode OTP untuk ${cleanEmail} adalah: ${cleanCode}`);
+    // 3. Fallback jika tidak ada mailer aktif (tetap return success agar flow registrasi kader tidak terhambat)
+    console.warn(`[OTP Server Log] Mailer SMTP/Resend belum disetel di environment. Kode OTP untuk ${cleanEmail} adalah: ${cleanCode}`);
     return NextResponse.json({
       success: true,
       message: 'Kode OTP telah diproses.',
       sentReal: false,
-      warning: 'Server mailer belum aktif.'
+      warning: 'Server mailer belum dikonfigurasi di Environment Variables.'
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Terjadi kesalahan server saat mengirim email.';
