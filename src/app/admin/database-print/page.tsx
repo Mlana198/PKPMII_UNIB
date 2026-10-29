@@ -420,7 +420,7 @@ export default function DatabasePrintPage() {
             <p>Mengetahui,</p>
             <div className="h-20"></div>
             <p className="font-bold underline uppercase">{leadership.ketua}</p>
-            <p className="font-bold">Ketua Komisariat</p>
+            <p className="italic font-normal">Ketua Komisariat</p>
           </div>
 
           {/* Kolom Kanan: Tempat, Tanggal & Sekretaris */}
@@ -428,7 +428,7 @@ export default function DatabasePrintPage() {
             <p>Situbondo, {currentDateString || '........................'}</p>
             <div className="h-20"></div>
             <p className="font-bold underline uppercase">{leadership.sekretaris}</p>
-            <p className="font-bold">Sekretaris Komisariat</p>
+            <p className="italic font-normal">Sekretaris Komisariat</p>
           </div>
         </div>
       </div>
