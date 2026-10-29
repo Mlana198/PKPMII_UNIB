@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { getCadres } from '@/lib/storage';
-import { Printer, ArrowLeft, Download, ShieldAlert } from 'lucide-react';
+import { Printer, ArrowLeft, Download, ShieldAlert, Edit2, Check } from 'lucide-react';
 import { getLeadership, setLeadership } from '@/lib/leadership';
 
 export default function DatabasePrintPage() {
@@ -14,12 +14,46 @@ export default function DatabasePrintPage() {
   const [cadres, setCadres] = useState(getCadres());
   const [filterRayon, setFilterRayon] = useState('ALL');
   const [leadership, setLeadershipState] = useState({ ketua: 'M. Rofiul Anam', sekretaris: 'Ahmad Wildan Zainur R' });
+
+  // State untuk kontak kop surat yang dapat diedit langsung
+  const [isEditingKop, setIsEditingKop] = useState(false);
+  const [kopAddress, setKopAddress] = useState('Sekretariat: Parse, Dawuhan, Ke. Situbondo, Kab. Situbondo Jawa Timur');
+  const [kopPhone, setKopPhone] = useState('081336485967/081357661867');
+  const [kopEmail, setKopEmail] = useState('komisariatunib@gmail.com');
+  const [kopCode, setKopCode] = useState('V-04');
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const cur = getLeadership();
       setLeadershipState(cur);
+
+      // Muat pengaturan kontak kop jika sudah pernah disimpan
+      const savedKop = localStorage.getItem('pmii_kop_settings');
+      if (savedKop) {
+        try {
+          const parsed = JSON.parse(savedKop);
+          if (parsed.address) setKopAddress(parsed.address);
+          if (parsed.phone) setKopPhone(parsed.phone);
+          if (parsed.email) setKopEmail(parsed.email);
+          if (parsed.code) setKopCode(parsed.code);
+        } catch {
+          // ignore
+        }
+      }
     }
   }, []);
+
+  const saveKopSettings = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pmii_kop_settings', JSON.stringify({
+        address: kopAddress,
+        phone: kopPhone,
+        email: kopEmail,
+        code: kopCode,
+      }));
+    }
+    setIsEditingKop(false);
+  };
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) {
@@ -69,6 +103,13 @@ export default function DatabasePrintPage() {
           </select>
 
           <button
+            onClick={() => setIsEditingKop(!isEditingKop)}
+            className="inline-flex items-center gap-1.5 border border-[#1B3D7B] text-[#1B3D7B] hover:bg-blue-50 text-xs font-semibold px-3.5 py-2 rounded transition-colors shadow-sm"
+          >
+            <Edit2 className="w-3.5 h-3.5" /> {isEditingKop ? 'Tutup Edit Kop' : 'Edit Kontak Kop'}
+          </button>
+
+          <button
             onClick={() => window.print()}
             className="inline-flex items-center gap-1.5 bg-[#1B3D7B] hover:bg-[#122852] text-white text-xs font-semibold px-4 py-2 rounded transition-colors shadow-sm"
           >
@@ -77,82 +118,136 @@ export default function DatabasePrintPage() {
         </div>
       </div>
 
+      {/* Editor Kontak Kop Surat (Hanya Tampil Saat Mode Edit Aktif, No Print) */}
+      {isEditingKop && (
+        <div className="max-w-[1240px] mx-auto mb-6 bg-white border-2 border-blue-200 rounded-lg p-5 shadow-sm no-print space-y-4">
+          <div className="flex items-center justify-between border-b pb-2">
+            <h3 className="text-xs font-bold text-[#1B3D7B] uppercase tracking-wider flex items-center gap-1.5">
+              <Edit2 className="w-4 h-4" /> Edit Informasi Kontak & Alamat Kop Surat
+            </h3>
+            <span className="text-[11px] text-[#64748B]">Perubahan akan tersimpan otomatis untuk pencetakan berikutnya</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+            <div className="sm:col-span-2">
+              <label className="block text-[11px] font-semibold text-[#64748B] mb-1">Alamat Sekretariat</label>
+              <input
+                type="text"
+                value={kopAddress}
+                onChange={(e) => setKopAddress(e.target.value)}
+                className="w-full border border-[#CBD5E1] rounded px-3 py-1.5 text-xs text-[#1E293B]"
+                placeholder="Sekretariat: ..."
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-[#64748B] mb-1">Nomor Telepon / HP</label>
+              <input
+                type="text"
+                value={kopPhone}
+                onChange={(e) => setKopPhone(e.target.value)}
+                className="w-full border border-[#CBD5E1] rounded px-3 py-1.5 text-xs text-[#1E293B]"
+                placeholder="081336485967/081357661867"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-[#64748B] mb-1">Email Resmi</label>
+              <input
+                type="email"
+                value={kopEmail}
+                onChange={(e) => setKopEmail(e.target.value)}
+                className="w-full border border-[#CBD5E1] rounded px-3 py-1.5 text-xs text-[#1E293B]"
+                placeholder="komisariatunib@gmail.com"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={saveKopSettings}
+              className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-1.5 rounded transition-colors shadow-sm"
+            >
+              <Check className="w-4 h-4" /> Simpan Perubahan Kop
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Area Dokumen Resmi Cetak F4 Landscape */}
       <div
         id="printable-area"
         className="max-w-[1240px] mx-auto bg-white p-8 sm:p-10 border border-slate-300 shadow-md print:border-none print:shadow-none print:p-0"
         style={{
-          fontFamily: "'Times New Roman', Times, serif",
+          fontFamily: "'Arial Narrow', Arial, 'Helvetica Neue', Helvetica, sans-serif",
+          fontSize: '11pt',
         }}
       >
-        {/* KOP SURAT RESMI */}
-        <div className="relative border-b-4 border-double border-blue-900 pb-3 mb-6">
-          <div className="flex items-start justify-between">
-            {/* Logo PMII & Kode Wilayah V-04 */}
-            <div className="flex flex-col items-center justify-center shrink-0 w-28">
-              {/* Logo Bintang 9 PMII */}
-              <div className="w-16 h-16 rounded-full bg-[#1B3D7B] border-2 border-[#D4A017] flex flex-col items-center justify-center text-white relative shadow-sm">
-                <div className="text-[7px] text-[#D4A017] font-bold tracking-widest leading-none mb-0.5">★★★★★</div>
-                <span className="font-extrabold text-sm tracking-wider text-white">PMII</span>
-                <div className="text-[7px] text-[#D4A017] font-bold tracking-widest leading-none mt-0.5">★★★★</div>
-              </div>
-              <span className="font-bold text-xs text-[#1B3D7B] tracking-wider mt-1.5">
-                V-04
+        {/* KOP SURAT RESMI SESUAI STANDAR PMII */}
+        <div className="relative pb-2 mb-4">
+          <div className="flex items-center justify-between">
+            {/* Logo Resmi PMII & Kode Wilayah V-04 */}
+            <div className="flex flex-col items-center justify-center shrink-0 w-24">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/logos/pmii-official.png"
+                alt="Logo Resmi PMII"
+                className="w-16 h-auto max-h-20 object-contain"
+              />
+              <span className="font-bold text-[11pt] text-black tracking-wider mt-1">
+                {kopCode}
               </span>
             </div>
 
             {/* Tulisan Kop Surat */}
-            <div className="flex-1 text-center px-4">
-              <h2 className="text-base sm:text-lg font-bold text-blue-900 uppercase tracking-wide leading-tight">
+            <div className="flex-1 text-center px-2">
+              <h2 className="text-[14pt] font-bold text-blue-600 uppercase tracking-wide leading-tight">
                 PENGURUS KOMISARIAT
               </h2>
-              <h1 className="text-lg sm:text-xl font-extrabold text-blue-900 uppercase tracking-wider leading-tight">
+              <h1 className="text-[17pt] font-black text-blue-600 uppercase tracking-wide leading-tight">
                 PERGERAKAN MAHASISWA ISLAM INDONESIA
               </h1>
-              <p className="text-xs italic text-blue-800 font-semibold leading-tight">
+              <p className="text-[10pt] italic text-blue-600 font-semibold leading-tight">
                 (Indonesian Moslem Student Movement)
               </p>
-              <h3 className="text-base sm:text-lg font-bold text-blue-900 uppercase tracking-wide leading-tight mt-0.5">
+              <h3 className="text-[14pt] font-bold text-blue-600 uppercase tracking-wide leading-tight mt-0.5">
                 UNIVERSITAS IBRAHIMY SITUBONDO
               </h3>
-              <p className="text-[11px] text-gray-700 leading-snug mt-1 font-sans">
-                Sekretariat: Parse, Dawuhan, Kec. Situbondo, Kab. Situbondo Jawa Timur
+              <p className="text-[10pt] text-blue-600 leading-snug mt-1">
+                {kopAddress}
               </p>
-              <p className="text-[11px] text-gray-700 leading-snug font-sans">
-                Telp: 081336485967 / 081357661867 &nbsp;|&nbsp; Email: <span className="text-blue-700 underline">komisariatunib@gmail.com</span>
+              <p className="text-[10pt] text-blue-600 leading-snug">
+                Telp: {kopPhone} Email: <span className="underline">{kopEmail}</span>
               </p>
             </div>
 
-            {/* Dummy placeholder spacer for symmetrical center */}
-            <div className="w-28 shrink-0 hidden sm:block"></div>
+            {/* Placeholder spacer simetris */}
+            <div className="w-24 shrink-0 hidden sm:block"></div>
           </div>
 
-          {/* Garis Ganda Pembatas */}
-          <div className="mt-3 border-t-2 border-blue-900"></div>
-          <div className="mt-0.5 border-t border-black"></div>
+          {/* Garis Tunggal Pembatas (Tidak Double) */}
+          <div className="mt-2.5 border-t-2 border-blue-600"></div>
         </div>
 
         {/* JUDUL DOKUMEN */}
-        <div className="text-center mb-5">
-          <h2 className="text-sm sm:text-base font-extrabold tracking-wide uppercase text-black">
+        <div className="text-center mb-4">
+          <h2 className="text-[13pt] font-extrabold tracking-wide uppercase text-black">
             DATABASE KOMISARIAT UNIVERSITAS IBRAHIMY SITUBONDO
           </h2>
         </div>
 
         {/* TABEL DATABASE SESUAI FORMAT LAMPIRAN RESMI */}
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-black text-[11px]">
+          <table className="w-full border-collapse border border-black text-[11pt]">
             <thead>
               <tr className="bg-[#EAB308] text-black font-extrabold uppercase text-center border-b border-black">
-                <th className="border border-black px-2 py-2.5 w-10">NO</th>
-                <th className="border border-black px-3 py-2.5">NAMA</th>
-                <th className="border border-black px-3 py-2.5 w-32">FAKULTAS</th>
-                <th className="border border-black px-2 py-2.5 w-16">JURUSAN</th>
-                <th className="border border-black px-3 py-2.5 w-32">NO.TLP</th>
-                <th className="border border-black px-3 py-2.5">E-MAIL</th>
-                <th className="border border-black px-2 py-2.5 w-20">FOTO</th>
-                <th className="border border-black px-2 py-2.5 w-20">ANGKATAN</th>
-                <th className="border border-black px-3 py-2.5 w-36">ALAMAT</th>
+                <th className="border border-black px-2 py-2 w-10">NO</th>
+                <th className="border border-black px-2 py-2">NAMA</th>
+                <th className="border border-black px-2 py-2 w-32">FAKULTAS</th>
+                <th className="border border-black px-2 py-2 w-16">JURUSAN</th>
+                <th className="border border-black px-2 py-2 w-32">NO.TLP</th>
+                <th className="border border-black px-2 py-2">E-MAIL</th>
+                <th className="border border-black px-2 py-2 w-20">FOTO</th>
+                <th className="border border-black px-2 py-2 w-20">ANGKATAN</th>
+                <th className="border border-black px-2 py-2 w-36">ALAMAT</th>
               </tr>
             </thead>
             <tbody>
@@ -162,17 +257,17 @@ export default function DatabasePrintPage() {
                   className="border-b border-black hover:bg-yellow-50/50 print:hover:bg-transparent"
                 >
                   {/* NO */}
-                  <td className="border border-black px-2 py-2 text-center font-bold">
+                  <td className="border border-black px-2 py-1.5 text-center font-bold">
                     {index + 1}.
                   </td>
 
                   {/* NAMA */}
-                  <td className="border border-black px-3 py-2 font-bold uppercase tracking-wide">
+                  <td className="border border-black px-2 py-1.5 font-bold uppercase tracking-wide">
                     {cadre.fullName}
                   </td>
 
                   {/* FAKULTAS */}
-                  <td className="border border-black px-3 py-2 text-center uppercase font-medium">
+                  <td className="border border-black px-2 py-1.5 text-center uppercase font-medium">
                     {cadre.faculty?.includes('SAINS')
                       ? 'SAINS & TEKNOLOGI'
                       : cadre.faculty?.includes('TARBIYAH')
@@ -181,17 +276,17 @@ export default function DatabasePrintPage() {
                   </td>
 
                   {/* JURUSAN */}
-                  <td className="border border-black px-2 py-2 text-center font-bold uppercase">
+                  <td className="border border-black px-2 py-1.5 text-center font-bold uppercase">
                     {cadre.studyProgram === 'Teknologi Informasi' ? 'TI' : cadre.studyProgram}
                   </td>
 
                   {/* NO.TLP */}
-                  <td className="border border-black px-3 py-2 text-center font-mono">
+                  <td className="border border-black px-2 py-1.5 text-center">
                     {cadre.phoneNumber}
                   </td>
 
                   {/* E-MAIL */}
-                  <td className="border border-black px-3 py-2 text-center text-blue-700 underline font-sans">
+                  <td className="border border-black px-2 py-1.5 text-center text-blue-700 underline">
                     {cadre.email}
                   </td>
 
@@ -211,12 +306,12 @@ export default function DatabasePrintPage() {
                   </td>
 
                   {/* ANGKATAN MAPABA */}
-                  <td className="border border-black px-2 py-2 text-center font-bold">
+                  <td className="border border-black px-2 py-1.5 text-center font-bold">
                     {cadre.mapabaYear || cadre.entryYear}
                   </td>
 
                   {/* ALAMAT */}
-                  <td className="border border-black px-3 py-2 uppercase font-medium">
+                  <td className="border border-black px-2 py-1.5 uppercase font-medium">
                     {cadre.address}
                   </td>
                 </tr>
@@ -226,7 +321,7 @@ export default function DatabasePrintPage() {
         </div>
 
         {/* Tanda Tangan Pengurus Pengesah (Kaki Dokumen Resmi) */}
-        <div className="mt-8 pt-4 flex justify-between items-end text-xs text-black font-sans print:break-inside-avoid">
+        <div className="mt-8 pt-4 flex justify-between items-end text-[11pt] text-black print:break-inside-avoid">
           <div className="text-center w-64">
             <p>Mengetahui,</p>
             <p className="font-bold">Ketua Mandataris PK PMII UNIB</p>
