@@ -288,7 +288,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const cadres = getCadres();
       cadres.unshift(newProfile);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('pmii_cadres', JSON.stringify(cadres));
+        try {
+          localStorage.setItem('pmii_cadres', JSON.stringify(cadres));
+        } catch (storageErr) {
+          console.warn('Quota exceeded on pmii_cadres, saving without large avatars if needed:', storageErr);
+          // Fallback: simpan dengan avatar default jika quota localStorage penuh
+          const slimmedCadres = cadres.map(c => c.avatarUrl?.startsWith('data:') ? { ...c, avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300' } : c);
+          try {
+            localStorage.setItem('pmii_cadres', JSON.stringify(slimmedCadres));
+          } catch {
+            // ignore
+          }
+        }
       }
       displayName = newProfile.fullName;
     } else {

@@ -41,21 +41,52 @@ export default function RegisterPage() {
   const [emailDeliveryStatus, setEmailDeliveryStatus] = useState<{ sent: boolean; error?: string }>({ sent: false });
 
 
-  const processAvatarFile = (file: File) => {
+  const compressImage = (file: File, maxWidth = 300, quality = 0.7): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } else {
+            resolve(e.target?.result as string);
+          }
+        };
+        img.onerror = () => resolve(e.target?.result as string);
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const processAvatarFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setErrorMsg('Format file harus berupa gambar (JPG, PNG, atau WEBP).');
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      setErrorMsg('Ukuran foto maksimal 2 MB.');
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Ukuran foto maksimal 5 MB.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setAvatarPreview(reader.result as string);
+    try {
+      const compressed = await compressImage(file, 240, 0.7);
+      setAvatarPreview(compressed);
       setErrorMsg(null);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      setErrorMsg('Gagal memproses gambar foto.');
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

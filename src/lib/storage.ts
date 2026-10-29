@@ -71,6 +71,14 @@ function setItem<T>(key: string, value: T): void {
     window.dispatchEvent(new CustomEvent('pmii-storage-updated', { detail: { key } }));
   } catch (e) {
     console.error('Storage error:', e);
+    // Jika quota penuh (QuotaExceededError), coba bersihkan cache yang tidak kritis
+    try {
+      localStorage.removeItem('pmii_quiz_attempts');
+      localStorage.setItem(key, JSON.stringify(value));
+      window.dispatchEvent(new CustomEvent('pmii-storage-updated', { detail: { key } }));
+    } catch (retryErr) {
+      console.error('Retry setItem failed:', retryErr);
+    }
   }
 }
 
