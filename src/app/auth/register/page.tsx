@@ -127,6 +127,7 @@ export default function RegisterPage() {
     });
 
     if (res.success) {
+      setSubmitting(false);
       if (res.verificationCode) {
         setVerificationCodeDisplay(res.verificationCode);
         setRegisteredEmail(res.email || email.trim());

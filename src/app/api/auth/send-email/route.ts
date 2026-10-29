@@ -177,7 +177,7 @@ export async function POST(req: Request) {
         });
 
         const info = await transporter.sendMail({
-          from: `"${mailFromName}" <${mailFromAddress}>`,
+          from: `"${mailFromName}" <${smtpUser}>`,
           to: cleanEmail,
           subject,
           html: htmlContent,
