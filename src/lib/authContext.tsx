@@ -323,12 +323,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     saveAuthAccount(newAccount);
 
-    // Kirim email OTP nyata via server endpoint
+    // Kirim email OTP nyata via server endpoint dengan timeout 8 detik agar form tidak stuck
     let emailStatusNote: { success: boolean; error?: string; sentReal?: boolean; warning?: string } | undefined;
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
       const emailRes = await fetch('/api/auth/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           email: cleanEmail,
           code: verificationCode,
@@ -336,12 +340,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           fullName: displayName,
         }),
       });
+
+      clearTimeout(timeoutId);
       emailStatusNote = await emailRes.json().catch(() => undefined);
       if (!emailRes.ok || !emailStatusNote?.success) {
         console.warn('API send-email response warning:', emailStatusNote);
       }
     } catch (emailErr) {
-      console.warn('Gagal memanggil API kirim email OTP:', emailErr);
+      console.warn('Gagal memanggil API kirim email OTP (atau timeout):', emailErr);
     }
 
     setIsLoading(false);

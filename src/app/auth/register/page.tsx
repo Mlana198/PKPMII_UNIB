@@ -105,39 +105,45 @@ export default function RegisterPage() {
     const isInternal = institutionChoice === 'ryn-1' || institutionChoice === 'ryn-2';
     const selectedRayonObj = isInternal ? rayons.find((r) => r.id === institutionChoice) : undefined;
 
-    const res = await register(email, password, {
-      fullName,
-      gender,
-      nim: isInternal ? nim : (nim || '-'),
-      university: isInternal ? 'Universitas Ibrahimy' : (customInstitution.trim() || 'Luar UNIB'),
-      rayonId: isInternal ? institutionChoice : 'eksternal',
-      rayonName: isInternal ? (selectedRayonObj?.name || 'Rayon Raden Rahmat') : (customInstitution.trim() || 'Lembaga Luar UNIB'),
-      faculty: isInternal ? (selectedRayonObj?.faculty || 'Fakultas Sains dan Teknologi') : 'Luar UNIB',
-      studyProgram,
-      entryYear: Number(entryYear),
-      mapabaYear: Number(entryYear),
-      cadreLevel: isInternal ? cadreLevel : 'Calon Anggota',
-      phoneNumber,
-      email,
-      institutionType: isInternal ? 'internal' : 'external',
-      customInstitutionName: customInstitution.trim(),
-      avatarUrl: avatarPreview || (gender === 'Perempuan' 
-        ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300' 
-        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300'),
-    });
+    try {
+      const res = await register(email, password, {
+        fullName,
+        gender,
+        nim: isInternal ? nim : (nim || '-'),
+        university: isInternal ? 'Universitas Ibrahimy' : (customInstitution.trim() || 'Luar UNIB'),
+        rayonId: isInternal ? institutionChoice : 'eksternal',
+        rayonName: isInternal ? (selectedRayonObj?.name || 'Rayon Raden Rahmat') : (customInstitution.trim() || 'Lembaga Luar UNIB'),
+        faculty: isInternal ? (selectedRayonObj?.faculty || 'Fakultas Sains dan Teknologi') : 'Luar UNIB',
+        studyProgram,
+        entryYear: Number(entryYear),
+        mapabaYear: Number(entryYear),
+        cadreLevel: isInternal ? cadreLevel : 'Calon Anggota',
+        phoneNumber,
+        email,
+        institutionType: isInternal ? 'internal' : 'external',
+        customInstitutionName: customInstitution.trim(),
+        avatarUrl: avatarPreview || (gender === 'Perempuan' 
+          ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300' 
+          : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300'),
+      });
 
-    if (res.success) {
       setSubmitting(false);
-      if (res.verificationCode) {
-        setVerificationCodeDisplay(res.verificationCode);
-        setRegisteredEmail(res.email || email.trim());
-        setEmailDeliveryStatus({ sent: Boolean(res.emailSent), error: res.emailError });
-        setVerifyModal(true);
+
+      if (res.success) {
+        if (res.verificationCode) {
+          setVerificationCodeDisplay(res.verificationCode);
+          setRegisteredEmail(res.email || email.trim());
+          setEmailDeliveryStatus({ sent: Boolean(res.emailSent), error: res.emailError });
+          setVerifyModal(true);
+        } else {
+          router.push('/kader/dashboard');
+        }
       } else {
-        router.push('/kader/dashboard');
+        setErrorMsg(res.error || 'Gagal mendaftar. Silakan coba kembali.');
       }
-    } else {
-      setErrorMsg(res.error || 'Gagal mendaftar. Silakan coba kembali.');
+    } catch (err: unknown) {
+      console.error('Registration error:', err);
+      setErrorMsg('Terjadi kesalahan saat mendaftar. Silakan coba kembali.');
       setSubmitting(false);
     }
   };
