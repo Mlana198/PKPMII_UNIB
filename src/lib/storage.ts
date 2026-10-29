@@ -148,6 +148,27 @@ export function updateCadre(cadreId: string, updates: Partial<CadreProfile>): Ca
   return updatedProfile;
 }
 
+export function deleteCadre(cadreId: string): CadreProfile[] {
+  const cadres = getCadres();
+  const target = cadres.find(c => c.id === cadreId);
+  const updated = cadres.filter(c => c.id !== cadreId);
+  setItem(STORAGE_KEYS.CADRES, updated);
+
+  // Jika kader memiliki auth account, hapus juga akun loginnya
+  if (target?.email) {
+    deleteAuthAccount(target.email);
+  }
+  return updated;
+}
+
+export function deleteAuthAccount(email: string): AuthAccount[] {
+  const accounts = getAuthAccounts();
+  const clean = email.trim().toLowerCase();
+  const updated = accounts.filter(a => a.email.toLowerCase() !== clean);
+  setItem(STORAGE_KEYS.ACCOUNTS, updated);
+  return updated;
+}
+
 // ==================== EXTERNAL USERS ====================
 export function getExternalUsers(): ExternalUser[] {
   return getItem<ExternalUser[]>(STORAGE_KEYS.EXTERNAL_USERS, []);

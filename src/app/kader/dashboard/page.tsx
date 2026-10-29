@@ -536,30 +536,48 @@ export default function KaderDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
-                    Afiliasi Rayon
+                    Lembaga Asal *
                   </label>
                   <select
-                    value={rayonId}
+                    value={rayonId === 'ryn-1' || rayonId === 'ryn-2' ? rayonId : 'lainnya'}
                     onChange={(e) => {
-                      const id = e.target.value;
-                      setRayonId(id);
-                      setRayonName(id === 'ryn-2' ? 'Rayon Raden Umar Said' : 'Rayon Raden Rahmat');
+                      const val = e.target.value;
+                      if (val === 'ryn-1') {
+                        setRayonId('ryn-1');
+                        setRayonName('Rayon Raden Rahmat');
+                        setFaculty('Fakultas Sains dan Teknologi');
+                      } else if (val === 'ryn-2') {
+                        setRayonId('ryn-2');
+                        setRayonName('Rayon Raden Umar Said');
+                        setFaculty('Fakultas Tarbiyah');
+                      } else {
+                        setRayonId('eksternal');
+                        setRayonName('Lainnya (Luar UNIB / Umum)');
+                        setFaculty('Luar UNIB');
+                      }
                     }}
                     className="w-full border border-[#E2E8EF] rounded px-3.5 py-2 text-xs bg-white focus:outline-none focus:border-[#1B3D7B]"
                   >
-                    <option value="ryn-1">Rayon Raden Rahmat (Sains & Teknologi)</option>
-                    <option value="ryn-2">Rayon Raden Umar Said (Tarbiyah)</option>
+                    <option value="ryn-1">Rayon Raden Rahmat (UNIB)</option>
+                    <option value="ryn-2">Rayon Raden Umar Said (UNIB)</option>
+                    <option value="lainnya">Lainnya (Luar UNIB / Umum)</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
-                    Fakultas
+                    {rayonId === 'eksternal' || (rayonId !== 'ryn-1' && rayonId !== 'ryn-2') ? 'Nama Lembaga / Instansi Asal' : 'Fakultas'}
                   </label>
                   <input
                     type="text"
-                    value={faculty}
-                    onChange={(e) => setFaculty(e.target.value)}
-                    placeholder="Contoh: Fakultas Sains dan Teknologi"
+                    value={rayonId === 'eksternal' || (rayonId !== 'ryn-1' && rayonId !== 'ryn-2') ? rayonName : faculty}
+                    onChange={(e) => {
+                      if (rayonId === 'eksternal' || (rayonId !== 'ryn-1' && rayonId !== 'ryn-2')) {
+                        setRayonName(e.target.value);
+                      } else {
+                        setFaculty(e.target.value);
+                      }
+                    }}
+                    placeholder={rayonId === 'eksternal' ? 'Contoh: Universitas Jember / UIN KHAS' : 'Contoh: Fakultas Sains dan Teknologi'}
                     className="w-full border border-[#E2E8EF] rounded px-3.5 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white"
                   />
                 </div>

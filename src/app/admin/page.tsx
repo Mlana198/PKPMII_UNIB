@@ -30,6 +30,7 @@ import {
   deleteELibrary,
   getExternalUsers,
   deleteExternalUser,
+  deleteCadre,
 } from '@/lib/storage';
 import { ExternalUser } from '@/lib/types';
 import {
@@ -942,6 +943,17 @@ export default function AdminDashboardPage() {
                         >
                           <CreditCard className="w-3.5 h-3.5" /> KTA
                         </Link>
+                        <button
+                          onClick={() => {
+                            if (confirm(`YAKIN HAPUS KADER "${c.fullName}"?\n\nTindakan ini akan menghapus data profil kader dan akun login yang bersangkutan secara permanen.`)) {
+                              setCadres(deleteCadre(c.id));
+                            }
+                          }}
+                          className="text-[11px] px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 font-semibold transition-colors inline-flex items-center gap-1"
+                          title="Hapus Kader & Akun"
+                        >
+                          <Trash2 className="w-3 h-3" /> Hapus
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -974,6 +986,7 @@ export default function AdminDashboardPage() {
                 <thead>
                   <tr className="bg-slate-100 text-[#1E293B] font-bold">
                     <th className={`${thClass} w-10 text-center`}>NO</th>
+                    <th className={`${thClass} text-center`}>FOTO</th>
                     <th className={thClass}>NAMA LENGKAP</th>
                     <th className={thClass}>LEMBAGA / INSTANSI ASAL</th>
                     <th className={thClass}>PROGRAM STUDI</th>
@@ -988,6 +1001,16 @@ export default function AdminDashboardPage() {
                   {externalUsers.map((u, idx) => (
                     <tr key={u.id} className="hover:bg-[#F8FAFC] transition-colors">
                       <td className={`${tdClass} text-center font-bold`}>{idx + 1}.</td>
+                      <td className={`${tdClass} text-center p-1.5`}>
+                        <div className="w-9 h-11 mx-auto rounded border border-[#CBD5E1] overflow-hidden bg-slate-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150'}
+                            alt={u.fullName}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </td>
                       <td className={`${tdClass} font-bold text-[#1E293B]`}>{u.fullName}</td>
                       <td className={`${tdClass} font-semibold text-[#1B3D7B]`}>{u.institutionName}</td>
                       <td className={tdClass}>{u.studyProgram || '-'}</td>
@@ -1144,30 +1167,47 @@ export default function AdminDashboardPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
-                            Afiliasi Rayon
+                            Lembaga Asal *
                           </label>
                           <select
-                            value={kelolaRayonId}
+                            value={kelolaRayonId === 'ryn-1' || kelolaRayonId === 'ryn-2' ? kelolaRayonId : 'lainnya'}
                             onChange={(e) => {
-                              const id = e.target.value;
-                              setKelolaRayonId(id);
-                              setKelolaRayonName(id === 'ryn-2' ? 'Rayon Raden Umar Said' : 'Rayon Raden Rahmat');
-                              setKelolaFaculty(id === 'ryn-2' ? 'Fakultas Tarbiyah' : 'Fakultas Sains dan Teknologi');
+                              const val = e.target.value;
+                              if (val === 'ryn-1') {
+                                setKelolaRayonId('ryn-1');
+                                setKelolaRayonName('Rayon Raden Rahmat');
+                                setKelolaFaculty('Fakultas Sains dan Teknologi');
+                              } else if (val === 'ryn-2') {
+                                setKelolaRayonId('ryn-2');
+                                setKelolaRayonName('Rayon Raden Umar Said');
+                                setKelolaFaculty('Fakultas Tarbiyah');
+                              } else {
+                                setKelolaRayonId('eksternal');
+                                setKelolaRayonName('Lainnya (Luar UNIB / Umum)');
+                                setKelolaFaculty('Luar UNIB');
+                              }
                             }}
                             className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
                           >
-                            <option value="ryn-1">Rayon Raden Rahmat (Sains & Teknologi)</option>
-                            <option value="ryn-2">Rayon Raden Umar Said (Tarbiyah)</option>
+                            <option value="ryn-1">Rayon Raden Rahmat (UNIB)</option>
+                            <option value="ryn-2">Rayon Raden Umar Said (UNIB)</option>
+                            <option value="lainnya">Lainnya (Luar UNIB / Umum)</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-[11px] font-semibold text-[#64748B] uppercase mb-1">
-                            Fakultas
+                            {kelolaRayonId === 'eksternal' || (kelolaRayonId !== 'ryn-1' && kelolaRayonId !== 'ryn-2') ? 'Nama Lembaga / Instansi Asal' : 'Fakultas'}
                           </label>
                           <input
                             type="text"
-                            value={kelolaFaculty}
-                            onChange={(e) => setKelolaFaculty(e.target.value)}
+                            value={kelolaRayonId === 'eksternal' || (kelolaRayonId !== 'ryn-1' && kelolaRayonId !== 'ryn-2') ? kelolaRayonName : kelolaFaculty}
+                            onChange={(e) => {
+                              if (kelolaRayonId === 'eksternal' || (kelolaRayonId !== 'ryn-1' && kelolaRayonId !== 'ryn-2')) {
+                                setKelolaRayonName(e.target.value);
+                              } else {
+                                setKelolaFaculty(e.target.value);
+                              }
+                            }}
                             className="w-full border border-[#E2E8EF] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#1B3D7B] bg-white text-[#1E293B]"
                           />
                         </div>
