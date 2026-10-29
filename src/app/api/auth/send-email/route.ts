@@ -1,10 +1,35 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-// Ambil RESEND_API_KEY dari env, jika belum diatur buat fallback log server
+// Konfigurasi SMTP (Prioritas Utama jika tersedia atau fallback ke kredensial siapkerja.net)
+const smtpHost = process.env.MAIL_HOST || 'mail.siapkerja.net';
+const smtpPort = Number(process.env.MAIL_PORT || 465);
+const smtpUser = process.env.MAIL_USERNAME || 'noreply@siapkerja.net';
+const smtpPass = process.env.MAIL_PASSWORD || 'U5fbwxwu?+Q!F^Rz';
+const mailFromAddress = process.env.MAIL_FROM_ADDRESS || 'noreply@siapkerja.net';
+const mailFromName = process.env.MAIL_FROM_NAME || 'PK PMII UNIB';
+
+// Transporter SMTP via Nodemailer
+const smtpTransporter = (smtpHost && smtpUser && smtpPass)
+  ? nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465, // SSL jika port 465
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+      tls: {
+        rejectUnauthorized: false, // Menghindari reject sertifikat self-signed jika ada
+      },
+    })
+  : null;
+
+// Ambil RESEND_API_KEY dari env jika ingin digunakan sebagai fallback
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const fromEmail = process.env.EMAIL_FROM || 'PMII UNIB <onboarding@resend.dev>';
+const fromEmail = process.env.EMAIL_FROM || `${mailFromName} <${mailFromAddress}>`;
 
 // In-Memory Rate Limiter: Maksimal 5 permintaan OTP per email dalam 10 menit
 const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
@@ -153,7 +178,37 @@ export async function POST(req: Request) {
       </html>
     `;
 
-    // Jika RESEND_API_KEY tersedia, kirim email secara nyata
+    // 1. Prioritas Utama: Kirim via SMTP Server (mail.siapkerja.net)
+    if (smtpTransporter) {
+      try {
+        const info = await smtpTransporter.sendMail({
+          from: `"${mailFromName}" <${mailFromAddress}>`,
+          to: cleanEmail,
+          subject,
+          html: htmlContent,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: 'Email verifikasi berhasil dikirim via SMTP.',
+          messageId: info.messageId,
+          sentReal: true,
+          provider: 'smtp',
+        });
+      } catch (smtpError: unknown) {
+        console.error('[SMTP Send Error]', smtpError);
+        // Jika SMTP gagal dan Resend ada, lanjutkan fallback ke Resend
+        if (!resend) {
+          const errMsg = smtpError instanceof Error ? smtpError.message : 'Gagal mengirim email melalui SMTP.';
+          return NextResponse.json(
+            { success: false, error: errMsg, sentReal: false },
+            { status: 500 }
+          );
+        }
+      }
+    }
+
+    // 2. Fallback: Kirim via Resend API jika dikonfigurasi
     if (resend) {
       const { data, error } = await resend.emails.send({
         from: fromEmail,
@@ -176,20 +231,21 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         success: true,
-        message: 'Email verifikasi berhasil dikirim ke alamat email tujuan.',
+        message: 'Email verifikasi berhasil dikirim via Resend.',
         id: data?.id,
-        sentReal: true
-      });
-    } else {
-      // Jika RESEND_API_KEY belum dipasang di .env.local, log ke console server
-      console.warn(`[OTP Server Log] RESEND_API_KEY tidak terdeteksi. Kode OTP untuk ${cleanEmail} adalah: ${cleanCode}`);
-      return NextResponse.json({
-        success: true,
-        message: 'Kode OTP telah diproses.',
-        sentReal: false,
-        warning: 'RESEND_API_KEY belum dikonfigurasi di file environment (.env.local). Pastikan untuk menambahkan RESEND_API_KEY agar email terkirim langsung ke inbox.'
+        sentReal: true,
+        provider: 'resend',
       });
     }
+
+    // 3. Fallback jika tidak ada mailer aktif
+    console.warn(`[OTP Server Log] Mailer tidak terdeteksi. Kode OTP untuk ${cleanEmail} adalah: ${cleanCode}`);
+    return NextResponse.json({
+      success: true,
+      message: 'Kode OTP telah diproses.',
+      sentReal: false,
+      warning: 'Server mailer belum aktif.'
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Terjadi kesalahan server saat mengirim email.';
     console.error('[Send Email Route Error]', err);
