@@ -546,36 +546,27 @@ export default function RegisterPage() {
       </div>
     </div>
 
-    {/* ====== Modal: Kode Verifikasi Email ====== */}
+    {/* ====== Modal: Pemberitahuan Email Verifikasi ====== */}
     {verifyModal && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-7 space-y-5">
           <div className="text-center space-y-3">
             <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
             <h2 className="text-lg font-bold text-[#1E293B]">Pendaftaran Berhasil!</h2>
-            <p className="text-xs text-[#64748B]">
-              {emailDeliveryStatus.sent ? (
-                <>Email berisi kode telah terkirim ke <strong>{registeredEmail}</strong>. Silakan periksa kotak masuk atau spam.</>
-              ) : (
-                <>Akun Anda berhasil didaftarkan untuk <strong>{registeredEmail}</strong>.</>
-              )}
+            <p className="text-xs text-[#64748B] leading-relaxed">
+              Email verifikasi telah dikirimkan ke <strong>{registeredEmail}</strong>.
             </p>
-            {emailDeliveryStatus.error && !emailDeliveryStatus.sent && (
-              <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 text-left">
-                ℹ️ Status Mailer: {emailDeliveryStatus.error}
-              </p>
-            )}
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center space-y-2">
-            <p className="text-[11px] font-semibold text-[#1B3D7B] uppercase tracking-wider">
-              Kode Verifikasi Akun Anda
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center space-y-2">
+            <div className="w-10 h-10 rounded-full bg-blue-50 text-[#1B3D7B] flex items-center justify-center mx-auto mb-1">
+              <Mail className="w-5 h-5" />
+            </div>
+            <p className="text-xs font-semibold text-[#1E293B]">
+              Periksa Kotak Masuk / Folder Spam Email Anda
             </p>
-            <p className="text-3xl font-bold font-mono text-[#1B3D7B] tracking-[0.3em]">
-              {verificationCodeDisplay}
-            </p>
-            <p className="text-[10px] text-[#64748B]">
-              Gunakan kode ini saat masuk pertama kali untuk mengaktifkan akun dan mencetak E-KTA.
+            <p className="text-[11px] text-[#64748B] leading-relaxed">
+              Silakan buka email Anda untuk melihat <strong>Kode 6-Digit Verifikasi</strong> yang telah kami kirimkan demi keamanan akun.
             </p>
           </div>
 
