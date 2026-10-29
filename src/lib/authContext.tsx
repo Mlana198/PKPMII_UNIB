@@ -76,13 +76,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    let hasLocalSession = false;
+
     if (typeof window !== 'undefined') {
       const savedLocalUser = localStorage.getItem('pmii_current_user');
       if (savedLocalUser) {
         try {
           const parsed = JSON.parse(savedLocalUser);
-          setUser(parsed);
-          fetchProfileAndAccount(parsed.id, parsed.email);
+          if (parsed && (parsed.id || parsed.email)) {
+            setUser(parsed);
+            fetchProfileAndAccount(parsed.id, parsed.email);
+            hasLocalSession = true;
+          }
         } catch {
           // ignore
         }
@@ -102,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       });
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (session?.user) {
           const u = { id: session.user.id, email: session.user.email };
           setUser(u);
@@ -110,15 +115,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (typeof window !== 'undefined') {
             localStorage.setItem('pmii_current_user', JSON.stringify(u));
           }
-        } else {
+          setIsLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+          // Hanya bersihkan sesi lokal jika pengguna secara eksplisit melakukan sign out dari Supabase
           setUser(null);
           setCadreProfile(null);
           setAccount(null);
           if (typeof window !== 'undefined') {
             localStorage.removeItem('pmii_current_user');
           }
+          setIsLoading(false);
+        } else {
+          // Event INITIAL_SESSION tanpa session aktif: jangan langsung hapus local-storage session
+          // jika user sedang login via akun lokal/admin
+          setIsLoading(false);
         }
-        setIsLoading(false);
       });
 
       return () => subscription.unsubscribe();
