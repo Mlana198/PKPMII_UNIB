@@ -14,6 +14,7 @@ export default function DatabasePrintPage() {
   const [cadres, setCadres] = useState(getCadres());
   const [filterRayon, setFilterRayon] = useState('ALL');
   const [leadership, setLeadershipState] = useState({ ketua: 'M. Rofiul Anam', sekretaris: 'Ahmad Wildan Zainur R' });
+  const [currentDateString, setCurrentDateString] = useState('');
 
   // State untuk kontak kop surat yang dapat diedit langsung
   const [isEditingKop, setIsEditingKop] = useState(false);
@@ -27,6 +28,15 @@ export default function DatabasePrintPage() {
     if (typeof window !== 'undefined') {
       const cur = getLeadership();
       setLeadershipState(cur);
+
+      // Format tanggal hari ini saat halaman dibuka dalam Bahasa Indonesia (contoh: 29 Oktober 2026)
+      const now = new Date();
+      const formatted = now.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+      setCurrentDateString(formatted);
 
       // Muat pengaturan kontak kop jika sudah pernah disimpan
       const savedKop = localStorage.getItem('pmii_kop_settings');
@@ -415,7 +425,7 @@ export default function DatabasePrintPage() {
 
           {/* Kolom Kanan: Tempat, Tanggal & Sekretaris */}
           <div className="text-center w-64">
-            <p>Situbondo, 10 Oktober 2026</p>
+            <p>Situbondo, {currentDateString || '........................'}</p>
             <div className="h-20"></div>
             <p className="font-bold underline uppercase">{leadership.sekretaris}</p>
             <p className="font-bold">Sekretaris Komisariat</p>
