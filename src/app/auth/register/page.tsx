@@ -344,7 +344,6 @@ export default function RegisterPage() {
               <div className="relative">
                 <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  key="reg-email-input"
                   id="reg-email"
                   name="email"
                   autoComplete="email"
@@ -354,19 +353,16 @@ export default function RegisterPage() {
                   onChange={(e) => {
                     const val = e.target.value;
                     setEmail(val);
-                    if (val.trim() && isEmailRegistered(val)) {
+                  }}
+                  onBlur={() => {
+                    if (email.trim() && isEmailRegistered(email)) {
                       setEmailDuplicateWarning('Email ini sudah terdaftar pada akun lain');
                     } else {
                       setEmailDuplicateWarning(null);
                     }
                   }}
-                  onBlur={() => {
-                    if (email.trim() && isEmailRegistered(email)) {
-                      setEmailDuplicateWarning('Email ini sudah terdaftar pada akun lain');
-                    }
-                  }}
                   placeholder="nama@email.com"
-                  className={`${inputClass} pl-9 ${emailDuplicateWarning ? 'border-red-400 focus:border-red-500 bg-red-50/20' : ''}`}
+                  className={`${inputClass} pl-9`}
                 />
               </div>
             </div>
@@ -378,7 +374,6 @@ export default function RegisterPage() {
                 </label>
                 <div className="relative">
                   <input
-                    key="reg-password-input"
                     id="reg-password"
                     name="password"
                     autoComplete="new-password"
@@ -404,7 +399,6 @@ export default function RegisterPage() {
                 </label>
                 <div className="relative">
                   <input
-                    key="reg-confirm-password-input"
                     id="reg-confirm-password"
                     name="confirmPassword"
                     autoComplete="new-password"
@@ -438,7 +432,6 @@ export default function RegisterPage() {
                 Nama Lengkap Sesuai KTM *
               </label>
               <input
-                key="reg-fullname-input"
                 id="reg-fullname"
                 name="fullName"
                 autoComplete="name"
@@ -481,30 +474,25 @@ export default function RegisterPage() {
                   )}
                 </div>
                 <input
-                  key="reg-nim-input"
                   id="reg-nim"
                   name="nim"
                   autoComplete="off"
-                  inputMode="numeric"
                   required={institutionChoice !== 'lainnya'}
                   type="text"
                   value={nim}
                   onChange={(e) => {
                     const val = e.target.value;
                     setNim(val);
-                    if (val.trim() && isNimRegistered(val)) {
-                      setNimDuplicateWarning(`NIM ${val} sudah terdaftar`);
-                    } else {
-                      setNimDuplicateWarning(null);
-                    }
                   }}
                   onBlur={() => {
                     if (nim.trim() && isNimRegistered(nim)) {
                       setNimDuplicateWarning(`NIM ${nim} sudah terdaftar`);
+                    } else {
+                      setNimDuplicateWarning(null);
                     }
                   }}
                   placeholder={institutionChoice === 'lainnya' ? 'NIM / NIK / ID (opsional)' : 'Contoh: 240501110077'}
-                  className={`${inputClass} font-mono ${nimDuplicateWarning ? 'border-red-400 focus:border-red-500 bg-red-50/20' : ''}`}
+                  className={`${inputClass} font-mono`}
                 />
               </div>
             </div>
@@ -522,30 +510,25 @@ export default function RegisterPage() {
                   )}
                 </div>
                 <input
-                  key="reg-phone-input"
                   id="reg-phone"
                   name="phoneNumber"
                   autoComplete="tel"
-                  inputMode="tel"
                   required
                   type="tel"
                   value={phoneNumber}
                   onChange={(e) => {
                     const val = e.target.value;
                     setPhoneNumber(val);
-                    if (val.trim() && isPhoneRegistered(val)) {
+                  }}
+                  onBlur={() => {
+                    if (phoneNumber.trim() && isPhoneRegistered(phoneNumber)) {
                       setPhoneDuplicateWarning('Nomor WhatsApp sudah terdaftar');
                     } else {
                       setPhoneDuplicateWarning(null);
                     }
                   }}
-                  onBlur={() => {
-                    if (phoneNumber.trim() && isPhoneRegistered(phoneNumber)) {
-                      setPhoneDuplicateWarning('Nomor WhatsApp sudah terdaftar');
-                    }
-                  }}
                   placeholder="0812xxxxxxxx"
-                  className={`${inputClass} font-mono ${phoneDuplicateWarning ? 'border-red-400 focus:border-red-500 bg-red-50/20' : ''}`}
+                  className={`${inputClass} font-mono`}
                 />
               </div>
               <div>
@@ -572,7 +555,6 @@ export default function RegisterPage() {
                   Nama Lembaga / Kampus / Instansi Asal *
                 </label>
                 <input
-                  key="reg-custom-inst-input"
                   id="reg-custom-institution"
                   name="customInstitution"
                   autoComplete="organization"
@@ -595,7 +577,6 @@ export default function RegisterPage() {
                   Program Studi *
                 </label>
                 <input
-                  key="reg-study-program-input"
                   id="reg-study-program"
                   name="studyProgram"
                   autoComplete="off"
@@ -612,10 +593,8 @@ export default function RegisterPage() {
                   Tahun Angkatan Kuliah
                 </label>
                 <input
-                  key="reg-entry-year-input"
                   id="reg-entry-year"
                   name="entryYear"
-                  inputMode="numeric"
                   type="number"
                   min={2018}
                   max={2030}
@@ -649,7 +628,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={submitting || Boolean(emailDuplicateWarning || nimDuplicateWarning || phoneDuplicateWarning)}
+            disabled={submitting}
             className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-3 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2 mt-4"
           >
             {submitting ? 'Memproses Akun...' : 'Daftar & Terbitkan Akun Kader'}{' '}
