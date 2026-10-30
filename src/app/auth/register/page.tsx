@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
-import { getRayons } from '@/lib/storage';
+import { getRayons, isEmailRegistered, isNimRegistered, isPhoneRegistered } from '@/lib/storage';
 import { FormalCadreLevel } from '@/lib/types';
 import { Lock, Mail, User, AlertCircle, ArrowRight, Upload, X, Camera, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
@@ -30,6 +30,11 @@ export default function RegisterPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
+
+  // Status peringatan otomatis untuk data unik
+  const [emailDuplicateWarning, setEmailDuplicateWarning] = useState<string | null>(null);
+  const [nimDuplicateWarning, setNimDuplicateWarning] = useState<string | null>(null);
+  const [phoneDuplicateWarning, setPhoneDuplicateWarning] = useState<string | null>(null);
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -122,6 +127,33 @@ export default function RegisterPage() {
     e.preventDefault();
     setErrorMsg(null);
 
+    // Verifikasi Keunikan Email
+    if (isEmailRegistered(email)) {
+      setErrorMsg('Email ini sudah terdaftar pada akun lain. Silakan gunakan email lain atau masuk ke akun Anda.');
+      setEmailDuplicateWarning('Email ini sudah terdaftar');
+      return;
+    }
+
+    const isInternal = institutionChoice === 'ryn-1' || institutionChoice === 'ryn-2';
+
+    // Verifikasi Keunikan NIM (Internal UNIB)
+    if (isInternal && nim.trim()) {
+      if (isNimRegistered(nim)) {
+        setErrorMsg(`NIM "${nim}" sudah terdaftar pada akun kader lain. Harap periksa kembali NIM Anda.`);
+        setNimDuplicateWarning(`NIM ${nim} sudah terdaftar`);
+        return;
+      }
+    }
+
+    // Verifikasi Keunikan Nomor WhatsApp
+    if (phoneNumber.trim()) {
+      if (isPhoneRegistered(phoneNumber)) {
+        setErrorMsg(`Nomor WhatsApp "${phoneNumber}" sudah terdaftar pada akun lain.`);
+        setPhoneDuplicateWarning('Nomor WhatsApp sudah digunakan');
+        return;
+      }
+    }
+
     if (password.length < 6) {
       setErrorMsg('Kata sandi minimal 6 karakter.');
       return;
@@ -133,7 +165,6 @@ export default function RegisterPage() {
     }
 
     setSubmitting(true);
-    const isInternal = institutionChoice === 'ryn-1' || institutionChoice === 'ryn-2';
     const selectedRayonObj = isInternal ? rayons.find((r) => r.id === institutionChoice) : undefined;
 
     try {
@@ -300,31 +331,57 @@ export default function RegisterPage() {
             </h2>
 
             <div>
-              <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
-                Email Aktif *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="reg-email" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider">
+                  Email Aktif *
+                </label>
+                {emailDuplicateWarning && (
+                  <span className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {emailDuplicateWarning}
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <Mail className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  suppressHydrationWarning
+                  key="reg-email-input"
+                  id="reg-email"
+                  name="email"
+                  autoComplete="email"
                   required
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEmail(val);
+                    if (val.trim() && isEmailRegistered(val)) {
+                      setEmailDuplicateWarning('Email ini sudah terdaftar pada akun lain');
+                    } else {
+                      setEmailDuplicateWarning(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (email.trim() && isEmailRegistered(email)) {
+                      setEmailDuplicateWarning('Email ini sudah terdaftar pada akun lain');
+                    }
+                  }}
                   placeholder="nama@email.com"
-                  className={`${inputClass} pl-9`}
+                  className={`${inputClass} pl-9 ${emailDuplicateWarning ? 'border-red-400 focus:border-red-500 bg-red-50/20' : ''}`}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                <label htmlFor="reg-password" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Kata Sandi *
                 </label>
                 <div className="relative">
                   <input
-                    suppressHydrationWarning
+                    key="reg-password-input"
+                    id="reg-password"
+                    name="password"
+                    autoComplete="new-password"
                     required
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -333,7 +390,6 @@ export default function RegisterPage() {
                     className={inputClass + ' pr-10'}
                   />
                   <button
-                    suppressHydrationWarning
                     type="button"
                     onClick={() => setShowPassword((p) => !p)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
@@ -343,12 +399,15 @@ export default function RegisterPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                <label htmlFor="reg-confirm-password" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Ulangi Kata Sandi *
                 </label>
                 <div className="relative">
                   <input
-                    suppressHydrationWarning
+                    key="reg-confirm-password-input"
+                    id="reg-confirm-password"
+                    name="confirmPassword"
+                    autoComplete="new-password"
                     required
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
@@ -357,7 +416,6 @@ export default function RegisterPage() {
                     className={inputClass + ' pr-10'}
                   />
                   <button
-                    suppressHydrationWarning
                     type="button"
                     onClick={() => setShowConfirmPassword((p) => !p)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#1B3D7B]"
@@ -372,15 +430,18 @@ export default function RegisterPage() {
           {/* Section: Biodata Kader */}
           <div className="space-y-3">
             <h2 className="text-xs font-bold text-[#1B3D7B] uppercase tracking-wider flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" /> 3. Data Keanggotaan & Akademik
+              <User className="w-3.5 h-3.5" /> 3. Data Keanggotaan &amp; Akademik
             </h2>
 
             <div>
-              <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+              <label htmlFor="reg-fullname" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                 Nama Lengkap Sesuai KTM *
               </label>
               <input
-                suppressHydrationWarning
+                key="reg-fullname-input"
+                id="reg-fullname"
+                name="fullName"
+                autoComplete="name"
                 required
                 type="text"
                 value={fullName}
@@ -393,11 +454,12 @@ export default function RegisterPage() {
             {/* JENIS KELAMIN & NIM */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                <label htmlFor="reg-gender" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Jenis Kelamin *
                 </label>
                 <select
-                  suppressHydrationWarning
+                  id="reg-gender"
+                  name="gender"
                   value={gender}
                   onChange={(e) => setGender(e.target.value as 'Laki-laki' | 'Perempuan')}
                   className={inputClass}
@@ -408,42 +470,91 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
-                  {institutionChoice === 'lainnya' ? 'Nomor Induk / Identitas (Opsional)' : 'Nomor Induk Mahasiswa (NIM) *'}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="reg-nim" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider">
+                    {institutionChoice === 'lainnya' ? 'Nomor Induk / Identitas (Opsional)' : 'Nomor Induk Mahasiswa (NIM) *'}
+                  </label>
+                  {nimDuplicateWarning && (
+                    <span className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {nimDuplicateWarning}
+                    </span>
+                  )}
+                </div>
                 <input
-                  suppressHydrationWarning
+                  key="reg-nim-input"
+                  id="reg-nim"
+                  name="nim"
+                  autoComplete="off"
+                  inputMode="numeric"
                   required={institutionChoice !== 'lainnya'}
                   type="text"
                   value={nim}
-                  onChange={(e) => setNim(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNim(val);
+                    if (val.trim() && isNimRegistered(val)) {
+                      setNimDuplicateWarning(`NIM ${val} sudah terdaftar`);
+                    } else {
+                      setNimDuplicateWarning(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (nim.trim() && isNimRegistered(nim)) {
+                      setNimDuplicateWarning(`NIM ${nim} sudah terdaftar`);
+                    }
+                  }}
                   placeholder={institutionChoice === 'lainnya' ? 'NIM / NIK / ID (opsional)' : 'Contoh: 240501110077'}
-                  className={`${inputClass} font-mono`}
+                  className={`${inputClass} font-mono ${nimDuplicateWarning ? 'border-red-400 focus:border-red-500 bg-red-50/20' : ''}`}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
-                  Nomor WhatsApp *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="reg-phone" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider">
+                    Nomor WhatsApp *
+                  </label>
+                  {phoneDuplicateWarning && (
+                    <span className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {phoneDuplicateWarning}
+                    </span>
+                  )}
+                </div>
                 <input
-                  suppressHydrationWarning
+                  key="reg-phone-input"
+                  id="reg-phone"
+                  name="phoneNumber"
+                  autoComplete="tel"
+                  inputMode="tel"
                   required
                   type="tel"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPhoneNumber(val);
+                    if (val.trim() && isPhoneRegistered(val)) {
+                      setPhoneDuplicateWarning('Nomor WhatsApp sudah terdaftar');
+                    } else {
+                      setPhoneDuplicateWarning(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (phoneNumber.trim() && isPhoneRegistered(phoneNumber)) {
+                      setPhoneDuplicateWarning('Nomor WhatsApp sudah terdaftar');
+                    }
+                  }}
                   placeholder="0812xxxxxxxx"
-                  className={`${inputClass} font-mono`}
+                  className={`${inputClass} font-mono ${phoneDuplicateWarning ? 'border-red-400 focus:border-red-500 bg-red-50/20' : ''}`}
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                <label htmlFor="reg-institution-choice" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Lembaga Asal *
                 </label>
                 <select
-                  suppressHydrationWarning
+                  id="reg-institution-choice"
+                  name="institutionChoice"
                   value={institutionChoice}
                   onChange={(e) => setInstitutionChoice(e.target.value as 'ryn-1' | 'ryn-2' | 'lainnya')}
                   className={inputClass}
@@ -457,11 +568,14 @@ export default function RegisterPage() {
 
             {institutionChoice === 'lainnya' && (
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                <label htmlFor="reg-custom-institution" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Nama Lembaga / Kampus / Instansi Asal *
                 </label>
                 <input
-                  suppressHydrationWarning
+                  key="reg-custom-inst-input"
+                  id="reg-custom-institution"
+                  name="customInstitution"
+                  autoComplete="organization"
                   required
                   type="text"
                   value={customInstitution}
@@ -470,18 +584,21 @@ export default function RegisterPage() {
                   className={inputClass}
                 />
                 <p className="text-[10px] text-[#64748B] mt-1">
-                  ℹ️ Akun dari luar lembaga UNIB akan terdaftar sebagai <strong>Pengguna Eksternal</strong> (untuk akses pelatihan, e-library, & CBT umum).
+                  ℹ️ Akun dari luar lembaga UNIB akan terdaftar sebagai <strong>Pengguna Eksternal</strong> (untuk akses pelatihan, e-library, &amp; CBT umum).
                 </p>
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                <label htmlFor="reg-study-program" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Program Studi *
                 </label>
                 <input
-                  suppressHydrationWarning
+                  key="reg-study-program-input"
+                  id="reg-study-program"
+                  name="studyProgram"
+                  autoComplete="off"
                   required
                   type="text"
                   value={studyProgram}
@@ -491,11 +608,14 @@ export default function RegisterPage() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                <label htmlFor="reg-entry-year" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Tahun Angkatan Kuliah
                 </label>
                 <input
-                  suppressHydrationWarning
+                  key="reg-entry-year-input"
+                  id="reg-entry-year"
+                  name="entryYear"
+                  inputMode="numeric"
                   type="number"
                   min={2018}
                   max={2030}
@@ -508,11 +628,12 @@ export default function RegisterPage() {
 
             {institutionChoice !== 'lainnya' && (
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
+                <label htmlFor="reg-cadre-level" className="block text-[11px] font-semibold text-[#64748B] uppercase tracking-wider mb-1">
                   Jenjang Kaderisasi
                 </label>
                 <select
-                  suppressHydrationWarning
+                  id="reg-cadre-level"
+                  name="cadreLevel"
                   value={cadreLevel}
                   onChange={(e) => setCadreLevel(e.target.value as FormalCadreLevel)}
                   className={inputClass}
@@ -527,10 +648,9 @@ export default function RegisterPage() {
           </div>
 
           <button
-            suppressHydrationWarning
             type="submit"
-            disabled={submitting}
-            className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-3 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2 mt-4"
+            disabled={submitting || Boolean(emailDuplicateWarning || nimDuplicateWarning || phoneDuplicateWarning)}
+            className="w-full bg-[#1B3D7B] hover:bg-[#122852] text-white font-semibold py-3 rounded text-xs uppercase tracking-wider transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2 mt-4"
           >
             {submitting ? 'Memproses Akun...' : 'Daftar & Terbitkan Akun Kader'}{' '}
             <ArrowRight className="w-3.5 h-3.5" />

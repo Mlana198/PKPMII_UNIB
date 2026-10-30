@@ -207,6 +207,62 @@ export function deleteExternalUser(id: string): ExternalUser[] {
   return updated;
 }
 
+// ==================== UNIQUE DATA CHECKERS ====================
+export function normalizePhoneNumber(phone: string): string {
+  // Buang karakter selain angka (spasi, strip, tanda kurung, dll)
+  let clean = phone.replace(/\D/g, '');
+  if (clean.startsWith('62')) {
+    clean = '0' + clean.slice(2);
+  }
+  return clean;
+}
+
+export function isEmailRegistered(email: string): boolean {
+  if (!email || !email.trim()) return false;
+  const clean = email.trim().toLowerCase();
+  
+  // Periksa di auth accounts
+  const accounts = getAuthAccounts();
+  if (accounts.some(a => a.email.toLowerCase() === clean)) return true;
+
+  // Periksa di database kader
+  const cadres = getCadres();
+  if (cadres.some(c => c.email && c.email.toLowerCase() === clean)) return true;
+
+  // Periksa di database pengguna eksternal
+  const externals = getExternalUsers();
+  if (externals.some(e => e.email && e.email.toLowerCase() === clean)) return true;
+
+  return false;
+}
+
+export function isNimRegistered(nim: string): boolean {
+  if (!nim || !nim.trim()) return false;
+  const clean = nim.trim().toLowerCase();
+  if (clean === '-' || clean === '') return false;
+
+  const cadres = getCadres();
+  return cadres.some(c => c.nim && c.nim.trim().toLowerCase() === clean);
+}
+
+export function isPhoneRegistered(phoneNumber: string): boolean {
+  if (!phoneNumber || !phoneNumber.trim()) return false;
+  const target = normalizePhoneNumber(phoneNumber);
+  if (!target || target.length < 7) return false;
+
+  const cadres = getCadres();
+  if (cadres.some(c => c.phoneNumber && normalizePhoneNumber(c.phoneNumber) === target)) {
+    return true;
+  }
+
+  const externals = getExternalUsers();
+  if (externals.some(e => e.phoneNumber && normalizePhoneNumber(e.phoneNumber) === target)) {
+    return true;
+  }
+
+  return false;
+}
+
 // ==================== AUTH ACCOUNTS ====================
 export function getAuthAccounts(): AuthAccount[] {
   return getItem<AuthAccount[]>(STORAGE_KEYS.ACCOUNTS, INITIAL_ACCOUNTS);

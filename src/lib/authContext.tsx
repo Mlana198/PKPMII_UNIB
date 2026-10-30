@@ -12,7 +12,10 @@ import {
   verifyEmailAccount,
   resetPasswordAccount,
   saveExternalUser,
-  getExternalUsers
+  getExternalUsers,
+  isEmailRegistered,
+  isNimRegistered,
+  isPhoneRegistered
 } from '@/lib/storage';
 import { ExternalUser } from '@/lib/types';
 
@@ -243,16 +246,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     const cleanEmail = email.trim().toLowerCase();
 
-    // Cek apakah email sudah terdaftar
-    const existing = getAuthAccountByEmail(cleanEmail);
-    if (existing) {
+    // 1. Cek apakah email sudah terdaftar
+    if (isEmailRegistered(cleanEmail)) {
       setIsLoading(false);
-      return { success: false, error: 'Email ini sudah terdaftar. Silakan gunakan email lain atau login.' };
+      return { success: false, error: 'Email ini sudah terdaftar pada akun lain. Silakan gunakan email lain atau login.' };
+    }
+
+    const isInternal = cadreData.institutionType === 'internal' && (cadreData.rayonId === 'ryn-1' || cadreData.rayonId === 'ryn-2');
+
+    // 2. Cek apakah NIM sudah terdaftar (khusus kader internal UNIB)
+    if (isInternal && cadreData.nim && cadreData.nim.trim()) {
+      if (isNimRegistered(cadreData.nim)) {
+        setIsLoading(false);
+        return { success: false, error: `NIM "${cadreData.nim}" sudah terdaftar pada akun kader lain. Harap periksa kembali NIM Anda.` };
+      }
+    }
+
+    // 3. Cek apakah Nomor WhatsApp sudah terdaftar
+    if (cadreData.phoneNumber && cadreData.phoneNumber.trim()) {
+      if (isPhoneRegistered(cadreData.phoneNumber)) {
+        setIsLoading(false);
+        return { success: false, error: `Nomor WhatsApp "${cadreData.phoneNumber}" sudah terdaftar pada akun lain.` };
+      }
     }
 
     // Buat kode verifikasi 6 digit acak
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const isInternal = cadreData.institutionType === 'internal' && (cadreData.rayonId === 'ryn-1' || cadreData.rayonId === 'ryn-2');
 
     let createdId = '';
     let displayName = cadreData.fullName || 'Pengguna PMII';
